@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight v2.8</title>
+    <title>Finanças Insight v2.9</title>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
@@ -14,18 +14,23 @@
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #d1d1d6; z-index: 100; }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-sec); }
         .nav-btn.ativo { color: var(--primary); font-weight: bold; }
-        .filtro-periodo { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid var(--primary); background: #fff; font-size: 14px; margin-bottom: 15px; font-weight: bold; outline: none; }
+        
+        .seletor-datas { display: flex; gap: 10px; margin-bottom: 15px; }
+        .seletor-datas div { flex: 1; }
+        .seletor-datas label { font-size: 10px; font-weight: bold; color: var(--text-sec); display: block; margin-bottom: 4px; }
+        .seletor-datas input { padding: 8px; font-size: 13px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
+
         .item-lista { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; cursor: pointer; }
         #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
         .modal-content { background:white; width:90%; max-height:80%; border-radius:20px; padding:20px; overflow-y:auto; position:relative; }
         .progresso-container { height: 8px; background: #E5E5EA; border-radius: 4px; margin: 10px 0; overflow: hidden; }
         .progresso-bar { height: 100%; transition: width 0.5s; }
-        input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px 0; font-size: 16px; outline: none; }
+        input, select, button { border-radius: 8px; border: 1px solid #ddd; outline: none; }
     </style>
 </head>
 <body>
 
-<div class="header"><strong>Finanças Insight v2.8</strong></div>
+<div class="header"><strong>Finanças Insight v2.9</strong></div>
 
 <div id="modal" onclick="fecharModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
@@ -36,15 +41,19 @@
 </div>
 
 <div id="aba-dash" class="aba ativa">
-    <select id="filtro-data" class="filtro-periodo" onchange="renderDash()">
-        <option value="hoje">📅 Até Hoje (Realizado)</option>
-        <option value="mes">📅 Mês Atual (Tudo)</option>
-        <option value="anterior">📅 Mês Anterior</option>
-        <option value="tudo">📊 Histórico Completo</option>
-    </select>
+    <div class="seletor-datas">
+        <div>
+            <label>DE:</label>
+            <input type="date" id="data-inicio" onchange="renderDash()">
+        </div>
+        <div>
+            <label>ATÉ:</label>
+            <input type="date" id="data-fim" onchange="renderDash()">
+        </div>
+    </div>
 
     <div class="card" style="text-align: center; border-bottom: 4px solid var(--primary);">
-        <span style="font-size: 12px; color: var(--text-sec);">Saldo do Período</span><br>
+        <span style="font-size: 12px; color: var(--text-sec);">Saldo Líquido</span><br>
         <b style="font-size: 24px;" id="d-saldo">R$ 0,00</b>
     </div>
 
@@ -62,27 +71,27 @@
     </div>
 
     <div class="card">
-        <strong style="color:var(--ganho)">Ganhos</strong>
+        <strong style="color:var(--ganho)">Resumo Ganhos</strong>
         <div id="lista-ganhos" style="margin-top:10px"></div>
     </div>
 
     <div class="card">
-        <strong style="color:var(--gasto)">Gastos</strong>
+        <strong style="color:var(--gasto)">Resumo Gastos</strong>
         <div id="lista-gastos" style="margin-top:10px"></div>
     </div>
 </div>
 
 <div id="aba-cat" class="aba">
-    <div class="card"><strong>Itens Novos</strong><div id="lista-pendentes"></div></div>
+    <div class="card"><strong>Itens Pendentes</strong><div id="lista-pendentes"></div></div>
 </div>
 
 <div id="aba-config" class="aba">
     <div class="card">
-        <strong>Ajustar Categorias</strong>
+        <strong>Categorias</strong>
         <div id="cats-all" style="margin-bottom:10px"></div>
-        <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria">
-        <select id="nova-cat-tipo"><option value="gasto">Saída</option><option value="ganho">Entrada</option></select>
-        <button style="background:var(--ganho); color:white; border:none; font-weight:bold" onclick="adicionarCategoria()">Criar</button>
+        <input type="text" id="nova-cat-nome" placeholder="Nome" style="width:100%; padding:10px; margin-bottom:5px">
+        <select id="nova-cat-tipo" style="width:100%; padding:10px; margin-bottom:10px"><option value="gasto">Saída</option><option value="ganho">Entrada</option></select>
+        <button style="background:var(--ganho); color:white; border:none; font-weight:bold; width:100%; padding:12px; border-radius:8px" onclick="adicionarCategoria()">Criar Nova</button>
     </div>
 </div>
 
@@ -100,44 +109,37 @@
         ganhos: ['Uber', '99', 'Particular', 'Reembolso', 'Empréstimo', 'Cashback', 'Shopee']
     };
 
-    function ir(aba, btn) {
-        document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
-        document.getElementById('aba-' + aba).classList.add('ativa');
-        btn.classList.add('ativo');
-        if(aba === 'dash') renderDash();
-        if(aba === 'cat') renderCategorizacao();
-        if(aba === 'config') renderConfig();
+    function configurarDatasPadrao() {
+        const agora = new Date();
+        const primeiroDia = new Date(agora.getFullYear(), agora.getMonth(), 1);
+        
+        document.getElementById('data-inicio').value = primeiroDia.toISOString().split('T')[0];
+        document.getElementById('data-fim').value = agora.toISOString().split('T')[0];
     }
 
-    function parseDataBr(str) {
-        const parts = str.split('/');
-        return new Date(parts[2], parts[1] - 1, parts[0]);
+    function parseDataBrParaDate(str) {
+        const [d, m, y] = str.split('/');
+        return new Date(y, m - 1, d);
     }
 
     function renderDash() {
         dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
-        const filtro = document.getElementById('filtro-data').value;
-        const hoje = new Date();
-        hoje.setHours(23, 59, 59, 999);
-
-        let filteredDB = dbOrigem.filter(i => {
-            const dataItem = parseDataBr(i.data);
-            if(filtro === 'hoje') return dataItem <= hoje;
-            if(filtro === 'mes') return dataItem.getMonth() === hoje.getMonth() && dataItem.getFullYear() === hoje.getFullYear();
-            if(filtro === 'anterior') {
-                const mesAnt = hoje.getMonth() === 0 ? 11 : hoje.getMonth() - 1;
-                const anoAnt = hoje.getMonth() === 0 ? hoje.getFullYear() - 1 : hoje.getFullYear();
-                return dataItem.getMonth() === mesAnt && dataItem.getFullYear() === anoAnt;
-            }
-            return true;
-        });
+        
+        const dataInicioStr = document.getElementById('data-inicio').value;
+        const dataFimStr = document.getElementById('data-fim').value;
+        
+        const dInicio = dataInicioStr ? new Date(dataInicioStr + "T00:00:00") : new Date(0);
+        const dFim = dataFimStr ? new Date(dataFimStr + "T23:59:59") : new Date();
 
         let tGastos = {}, tGanhos = {}, vGanhos = 0, vGastos = 0;
-        filteredDB.forEach(i => {
-            const v = parseFloat(i.valor), cat = aplicarRegras(i);
-            if(i.tipo === 'ganho') { vGanhos += v; tGanhos[cat] = (tGanhos[cat] || 0) + v; }
-            else { vGastos += v; tGastos[cat] = (tGastos[cat] || 0) + v; }
+        
+        dbOrigem.forEach(i => {
+            const dataItem = parseDataBrParaDate(i.data);
+            if (dataItem >= dInicio && dataItem <= dFim) {
+                const v = parseFloat(i.valor), cat = aplicarRegras(i);
+                if(i.tipo === 'ganho') { vGanhos += v; tGanhos[cat] = (tGanhos[cat] || 0) + v; }
+                else { vGastos += v; tGastos[cat] = (tGastos[cat] || 0) + v; }
+            }
         });
 
         const saldo = vGanhos - vGastos;
@@ -167,21 +169,12 @@
         document.getElementById('modal-titulo').innerText = catNome;
         modal.style.display = 'flex';
         
-        // Filtra os itens respeitando o período selecionado no dash
-        const filtro = document.getElementById('filtro-data').value;
-        const hoje = new Date();
+        const dInicio = new Date(document.getElementById('data-inicio').value + "T00:00:00");
+        const dFim = new Date(document.getElementById('data-fim').value + "T23:59:59");
+
         const itens = dbOrigem.filter(i => {
-            const dataItem = parseDataBr(i.data);
-            const matchesCat = i.tipo === tipo && aplicarRegras(i) === catNome;
-            if(!matchesCat) return false;
-            if(filtro === 'hoje') return dataItem <= hoje;
-            if(filtro === 'mes') return dataItem.getMonth() === hoje.getMonth() && dataItem.getFullYear() === hoje.getFullYear();
-            if(filtro === 'anterior') {
-                const mesAnt = hoje.getMonth() === 0 ? 11 : hoje.getMonth() - 1;
-                const anoAnt = hoje.getMonth() === 0 ? hoje.getFullYear() - 1 : hoje.getFullYear();
-                return dataItem.getMonth() === mesAnt && dataItem.getFullYear() === anoAnt;
-            }
-            return true;
+            const dataItem = parseDataBrParaDate(i.data);
+            return i.tipo === tipo && aplicarRegras(i) === catNome && dataItem >= dInicio && dataItem <= dFim;
         });
 
         corpo.innerHTML = itens.map(i => `
@@ -189,6 +182,16 @@
                 <small>${i.data}</small><br><strong>${i.desc}</strong><br>
                 <b style="color:${tipo==='ganho'?'var(--ganho)':'var(--gasto)'}">R$ ${parseFloat(i.valor).toLocaleString('pt-br',{minimumFractionDigits:2})}</b>
             </div>`).join('');
+    }
+
+    function ir(aba, btn) {
+        document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+        document.getElementById('aba-' + aba).classList.add('ativa');
+        btn.classList.add('ativo');
+        if(aba === 'dash') renderDash();
+        if(aba === 'cat') renderCategorizacao();
+        if(aba === 'config') renderConfig();
     }
 
     function aplicarRegras(item) {
@@ -209,7 +212,7 @@
         lista.innerHTML = pendentes.length === 0 ? "<p style='text-align:center;'>Tudo categorizado!</p>" : 
             pendentes.map(i => `<div style="padding:10px 0; border-bottom:1px solid #eee">
                 <small>${i.tipo==='ganho'?'ENTRADA':'SAÍDA'}</small><br><strong>${i.desc}</strong>
-                <select onchange="salvarRegra('${i.desc}', this.value, '${i.tipo}')">
+                <select style="width:100%; padding:10px" onchange="salvarRegra('${i.desc}', this.value, '${i.tipo}')">
                     <option value="">Escolher...</option>
                     ${(i.tipo==='ganho'?categorias.ganhos:categorias.gastos).map(c => `<option value="${c}">${c}</option>`).join('')}
                 </select></div>`).join('');
@@ -233,7 +236,7 @@
         renderConfig();
     }
 
-    window.onload = () => renderDash();
+    window.onload = () => { configurarDatasPadrao(); renderDash(); };
 </script>
 </body>
 </html>
