@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight v2.5</title>
+    <title>Finanças Insight v2.6</title>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
@@ -11,27 +11,39 @@
         .aba { display: none; padding: 15px; }
         .aba.ativa { display: block; }
         .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #d1d1d6; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #d1d1d6; z-index: 100; }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-sec); }
         .nav-btn.ativo { color: var(--primary); font-weight: bold; }
         
-        .progresso-container { height: 10px; background: #E5E5EA; border-radius: 5px; margin: 10px 0; overflow: hidden; }
-        .progresso-bar { height: 100%; background: var(--gasto); transition: width 0.5s; }
+        /* Listas e Interatividade */
+        .item-lista { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; cursor: pointer; }
+        .item-lista:active { background: #f9f9f9; }
+        .item-lista b { color: var(--text); }
         
-        .item-lista { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; }
-        .item-lista:last-child { border: none; }
+        /* Modal de Detalhes */
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+        .modal-content { background:white; width:90%; max-height:80%; border-radius:20px; padding:20px; overflow-y:auto; position:relative; }
+        .btn-fechar { position:absolute; top:15px; right:15px; font-size:20px; border:none; background:none; color:var(--text-sec); }
         
-        .select-cat { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid var(--primary); background: #f0f7ff; color: var(--primary); font-weight: 600; margin-top: 5px; }
         .badge { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: #eee; color: #666; display: inline-block; margin: 2px; }
-        
         input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px 0; font-size: 16px; outline: none; }
         .btn-save { background: var(--ganho); color: white; border: none; font-weight: bold; }
-        .tipo-tag { font-size: 9px; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; font-weight: 800; margin-bottom: 5px; display: inline-block; }
+        
+        .progresso-container { height: 8px; background: #E5E5EA; border-radius: 4px; margin: 10px 0; overflow: hidden; }
+        .progresso-bar { height: 100%; transition: width 0.5s; }
     </style>
 </head>
 <body>
 
-<div class="header"><strong>Finanças Insight v2.5</strong></div>
+<div class="header"><strong>Finanças Insight v2.6</strong></div>
+
+<div id="modal" onclick="fecharModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <button class="btn-fechar" onclick="document.getElementById('modal').style.display='none'">✕</button>
+        <h3 id="modal-titulo" style="margin-top:0">Detalhes</h3>
+        <div id="modal-corpo"></div>
+    </div>
+</div>
 
 <div id="aba-dash" class="aba ativa">
     <div style="display:flex; gap:10px; margin-bottom:15px">
@@ -41,43 +53,43 @@
 
     <div class="card">
         <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-sec)">
-            <span>Eficiência: Gastos vs Ganhos</span>
+            <span>Uso da Renda</span>
             <b id="perc-uso">0%</b>
         </div>
         <div class="progresso-container"><div id="barra-uso" class="progresso-bar"></div></div>
-        <p id="msg-eficiencia" style="font-size:11px; text-align:center; margin:0; color:var(--text-sec)"></p>
     </div>
 
     <div class="card">
-        <strong style="color:var(--ganho)">Resumo de Ganhos</strong>
+        <strong style="color:var(--ganho)">Ganhos por Categoria</strong>
+        <p style="font-size:10px; color:var(--text-sec); margin:0">Toque para ver os lançamentos</p>
         <div id="lista-ganhos" style="margin-top:10px"></div>
     </div>
 
     <div class="card">
-        <strong style="color:var(--gasto)">Resumo de Gastos</strong>
+        <strong style="color:var(--gasto)">Gastos por Categoria</strong>
+        <p style="font-size:10px; color:var(--text-sec); margin:0">Toque para ver os lançamentos</p>
         <div id="lista-gastos" style="margin-top:10px"></div>
     </div>
 </div>
 
 <div id="aba-cat" class="aba">
     <div class="card">
-        <strong>Pendentes de Categorização</strong>
+        <strong>Itens Novos</strong>
         <div id="lista-pendentes"></div>
     </div>
 </div>
 
 <div id="aba-config" class="aba">
     <div class="card">
-        <strong>Gerenciar Categorias</strong>
-        <small>Gastos:</small> <div id="cats-gastos"></div><br>
-        <small>Ganhos:</small> <div id="cats-ganhos"></div>
+        <strong>Ajustar Categorias</strong>
+        <div id="cats-all"></div>
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0">
         <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria">
         <select id="nova-cat-tipo">
-            <option value="gasto">Tipo: Gasto</option>
-            <option value="ganho">Tipo: Ganho</option>
+            <option value="gasto">Tipo: Saída</option>
+            <option value="ganho">Tipo: Entrada</option>
         </select>
-        <button class="btn-save" onclick="adicionarCategoria()">Salvar Nova</button>
+        <button class="btn-save" onclick="adicionarCategoria()">Criar</button>
     </div>
 </div>
 
@@ -90,10 +102,9 @@
 <script>
     let dbOrigem = [];
     let regras = JSON.parse(localStorage.getItem('insight_regras')) || []; 
-    
     let categorias = JSON.parse(localStorage.getItem('insight_categorias_v2')) || {
         gastos: ['Aluguel', 'Gasolina', 'Cartão crédito', 'Besteira', 'Empréstimos', 'Juliana', 'Água', 'Luz', 'Manutenção Carro', 'Comida', 'Saúde', 'Energético', 'Benjamim'],
-        ganhos: ['Uber', '99', 'Particular', 'Reembolso']
+        ganhos: ['Uber', '99', 'Particular', 'Reembolso', 'Empréstimo']
     };
 
     function ir(aba, btn) {
@@ -106,102 +117,106 @@
         if(aba === 'config') renderConfig();
     }
 
-    function adicionarCategoria() {
-        const nome = document.getElementById('nova-cat-nome').value.trim();
-        const tipo = document.getElementById('nova-cat-tipo').value;
-        if(!nome) return;
-        if(tipo === 'gasto') categorias.gastos.push(nome); else categorias.ganhos.push(nome);
-        localStorage.setItem('insight_categorias_v2', JSON.stringify(categorias));
-        document.getElementById('nova-cat-nome').value = "";
-        renderConfig();
-    }
-
-    function salvarRegra(termo, selectElement, tipoOriginal) {
-        const catDestino = selectElement.value;
-        if(!catDestino) return;
-        // Limpeza rigorosa para evitar o erro do item que não some
+    function salvarRegra(termo, catDestino, tipo) {
         const termoLimpo = termo.trim().toLowerCase();
         regras = regras.filter(r => r.termo !== termoLimpo);
-        regras.push({ termo: termoLimpo, categoria: catDestino, tipo: tipoOriginal });
+        regras.push({ termo: termoLimpo, categoria: catDestino, tipo: tipo });
         localStorage.setItem('insight_regras', JSON.stringify(regras));
+        renderDash();
         renderCategorizacao();
+        document.getElementById('modal').style.display = 'none';
     }
 
     function aplicarRegras(item) {
         const descLimpa = item.desc.trim().toLowerCase();
-        const regraEncontrada = regras.find(r => descLimpa === r.termo);
-        return regraEncontrada ? regraEncontrada.categoria : 'Não Categorizado';
+        const r = regras.find(reg => descLimpa === reg.termo);
+        return r ? r.categoria : 'Não Categorizado';
     }
 
-    function renderCategorizacao() {
-        dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
-        const lista = document.getElementById('lista-pendentes');
-        lista.innerHTML = "";
+    function verDetalhes(catNome, tipo) {
+        const modal = document.getElementById('modal');
+        const corpo = document.getElementById('modal-corpo');
+        document.getElementById('modal-titulo').innerText = catNome;
+        modal.style.display = 'flex';
         
-        let pendentes = [];
-        dbOrigem.forEach(i => {
-            if(aplicarRegras(i) === 'Não Categorizado') {
-                if(!pendentes.some(p => p.desc.trim().toLowerCase() === i.desc.trim().toLowerCase())) pendentes.push(i);
-            }
-        });
-
-        if(pendentes.length === 0) {
-            lista.innerHTML = "<p style='text-align:center; padding:20px; color:var(--ganho)'><b>✨ Tudo Categorizado!</b></p>";
-            return;
-        }
-
-        pendentes.forEach(item => {
-            let listaOpcoes = (item.tipo === 'ganho' ? categorias.ganhos : categorias.gastos);
-            let options = listaOpcoes.map(c => `<option value="${c}">${c}</option>`).join('');
-            lista.innerHTML += `
-                <div style="padding:15px 0; border-bottom:1px solid #eee">
-                    <span class="tipo-tag" style="background:${item.tipo==='ganho'?'#34C75922':'#FF3B3022'}; color:${item.tipo==='ganho'?'var(--ganho)':'var(--gasto)'}">${item.tipo==='ganho'?'Entrada':'Saída'}</span><br>
-                    <strong>${item.desc}</strong>
-                    <select class="select-cat" onchange="salvarRegra('${item.desc}', this, '${item.tipo}')">
-                        <option value="">Categorizar como...</option>${options}
+        const itens = dbOrigem.filter(i => i.tipo === tipo && aplicarRegras(i) === catNome);
+        
+        corpo.innerHTML = itens.map(i => `
+            <div style="padding:15px 0; border-bottom:1px solid #eee">
+                <div style="font-size:12px; color:var(--text-sec)">${i.data}</div>
+                <div style="font-weight:bold; margin-bottom:5px">${i.desc}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                    <b style="color:${tipo==='ganho'?'var(--ganho)':'var(--gasto)'}">R$ ${parseFloat(i.valor).toLocaleString('pt-br',{minimumFractionDigits:2})}</b>
+                    <select style="width:auto; padding:5px; font-size:12px" onchange="salvarRegra('${i.desc}', this.value, '${tipo}')">
+                        <option value="">Alterar categoria...</option>
+                        ${(tipo==='ganho'?categorias.ganhos:categorias.gastos).map(c => `<option value="${c}">${c}</option>`).join('')}
                     </select>
-                </div>`;
-        });
+                </div>
+            </div>
+        `).join('');
     }
+
+    function fecharModal(e) { if(e.target.id === 'modal') e.target.style.display = 'none'; }
 
     function renderDash() {
         dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
-        let totaisGastos = {};
-        let totaisGanhos = {};
-        let vGanhos = 0, vGastos = 0;
+        let tGastos = {}, tGanhos = {}, vGanhos = 0, vGastos = 0;
 
         dbOrigem.forEach(i => {
-            const v = parseFloat(i.valor);
-            const cat = aplicarRegras(i);
-            if(i.tipo === 'ganho') { vGanhos += v; totaisGanhos[cat] = (totaisGanhos[cat] || 0) + v; }
-            else { vGastos += v; totaisGastos[cat] = (totaisGastos[cat] || 0) + v; }
+            const v = parseFloat(i.valor), cat = aplicarRegras(i);
+            if(i.tipo === 'ganho') { vGanhos += v; tGanhos[cat] = (tGanhos[cat] || 0) + v; }
+            else { vGastos += v; tGastos[cat] = (tGastos[cat] || 0) + v; }
         });
 
         document.getElementById('d-ganhos').innerText = `R$ ${vGanhos.toLocaleString('pt-br',{minimumFractionDigits:2})}`;
         document.getElementById('d-gastos').innerText = `R$ ${vGastos.toLocaleString('pt-br',{minimumFractionDigits:2})}`;
 
-        // Cálculo Percentual
         const perc = vGanhos > 0 ? Math.round((vGastos / vGanhos) * 100) : 0;
         document.getElementById('perc-uso').innerText = perc + "%";
         document.getElementById('barra-uso').style.width = Math.min(perc, 100) + "%";
-        document.getElementById('barra-uso').style.background = perc > 90 ? 'var(--gasto)' : 'var(--primary)';
-        document.getElementById('msg-eficiencia').innerText = vGanhos > vGastos ? `Você economizou ${(100-perc)}% do que ganhou.` : `Seus gastos superaram os ganhos em ${perc-100}%!`;
+        document.getElementById('barra-uso').style.background = perc > 100 ? 'var(--gasto)' : 'var(--ganho)';
 
-        // Renderizar Listas
-        const formatarLista = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([cat, val]) => `
-            <div class="item-lista"><span>${cat}</span><b>R$ ${val.toLocaleString('pt-br',{minimumFractionDigits:2})}</b></div>
+        const listHtml = (obj, tipo) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([c, v]) => `
+            <div class="item-lista" onclick="verDetalhes('${c}', '${tipo}')">
+                <span>${c}</span><b>R$ ${v.toLocaleString('pt-br',{minimumFractionDigits:2})} ›</b>
+            </div>
         `).join('');
 
-        document.getElementById('lista-ganhos').innerHTML = formatarLista(totaisGanhos) || "Nenhum ganho categorizado.";
-        document.getElementById('lista-gastos').innerHTML = formatarLista(totaisGastos) || "Nenhum gasto categorizado.";
+        document.getElementById('lista-ganhos').innerHTML = listHtml(tGanhos, 'ganho');
+        document.getElementById('lista-gastos').innerHTML = listHtml(tGastos, 'gasto');
+    }
+
+    function renderCategorizacao() {
+        dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
+        const lista = document.getElementById('lista-pendentes');
+        let pendentes = [];
+        dbOrigem.forEach(i => {
+            if(aplicarRegras(i) === 'Não Categorizado' && !pendentes.some(p => p.desc.toLowerCase() === i.desc.toLowerCase())) pendentes.push(i);
+        });
+
+        lista.innerHTML = pendentes.length === 0 ? "<p style='text-align:center;color:var(--ganho)'><b>Tudo certo!</b></p>" : 
+            pendentes.map(i => `
+                <div style="padding:10px 0; border-bottom:1px solid #eee">
+                    <small>${i.tipo==='ganho'?'ENTRADA':'SAÍDA'}</small><br><strong>${i.desc}</strong>
+                    <select onchange="salvarRegra('${i.desc}', this.value, '${i.tipo}')">
+                        <option value="">Escolher...</option>
+                        ${(i.tipo==='ganho'?categorias.ganhos:categorias.gastos).map(c => `<option value="${c}">${c}</option>`).join('')}
+                    </select>
+                </div>`).join('');
     }
 
     function renderConfig() {
-        document.getElementById('cats-gastos').innerHTML = categorias.gastos.map(c => `<span class="badge">${c}</span>`).join('');
-        document.getElementById('cats-ganhos').innerHTML = categorias.ganhos.map(c => `<span class="badge">${c}</span>`).join('');
+        document.getElementById('cats-all').innerHTML = [...categorias.gastos, ...categorias.ganhos].map(c => `<span class="badge">${c}</span>`).join('');
     }
 
-    window.onload = () => { renderDash(); };
+    function adicionarCategoria() {
+        const nome = document.getElementById('nova-cat-nome').value.trim(), tipo = document.getElementById('nova-cat-tipo').value;
+        if(nome) { if(tipo==='gasto') categorias.gastos.push(nome); else categorias.ganhos.push(nome); }
+        localStorage.setItem('insight_categorias_v2', JSON.stringify(categorias));
+        renderConfig();
+    }
+
+    window.onload = () => renderDash();
 </script>
 </body>
 </html>
