@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight v2.7</title>
+    <title>Finanças Insight v2.8</title>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
@@ -14,25 +14,22 @@
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #d1d1d6; z-index: 100; }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-sec); }
         .nav-btn.ativo { color: var(--primary); font-weight: bold; }
-        
-        .filtro-periodo { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; background: #fff; font-size: 14px; margin-bottom: 15px; font-weight: 600; }
-        
+        .filtro-periodo { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid var(--primary); background: #fff; font-size: 14px; margin-bottom: 15px; font-weight: bold; outline: none; }
         .item-lista { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; cursor: pointer; }
         #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
         .modal-content { background:white; width:90%; max-height:80%; border-radius:20px; padding:20px; overflow-y:auto; position:relative; }
         .progresso-container { height: 8px; background: #E5E5EA; border-radius: 4px; margin: 10px 0; overflow: hidden; }
         .progresso-bar { height: 100%; transition: width 0.5s; }
         input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px 0; font-size: 16px; outline: none; }
-        .btn-save { background: var(--ganho); color: white; border: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="header"><strong>Finanças Insight v2.7</strong></div>
+<div class="header"><strong>Finanças Insight v2.8</strong></div>
 
 <div id="modal" onclick="fecharModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <button style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:20px;" onclick="document.getElementById('modal').style.display='none'">✕</button>
+        <button style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:24px; color:#ccc" onclick="document.getElementById('modal').style.display='none'">✕</button>
         <h3 id="modal-titulo" style="margin-top:0">Detalhes</h3>
         <div id="modal-corpo"></div>
     </div>
@@ -40,11 +37,16 @@
 
 <div id="aba-dash" class="aba ativa">
     <select id="filtro-data" class="filtro-periodo" onchange="renderDash()">
-        <option value="hoje">Até Hoje (Realizado)</option>
-        <option value="mes">Mês Atual (Tudo)</option>
-        <option value="anterior">Mês Anterior</option>
-        <option value="tudo">Histórico Completo</option>
+        <option value="hoje">📅 Até Hoje (Realizado)</option>
+        <option value="mes">📅 Mês Atual (Tudo)</option>
+        <option value="anterior">📅 Mês Anterior</option>
+        <option value="tudo">📊 Histórico Completo</option>
     </select>
+
+    <div class="card" style="text-align: center; border-bottom: 4px solid var(--primary);">
+        <span style="font-size: 12px; color: var(--text-sec);">Saldo do Período</span><br>
+        <b style="font-size: 24px;" id="d-saldo">R$ 0,00</b>
+    </div>
 
     <div style="display:flex; gap:10px; margin-bottom:15px">
         <div class="card" style="flex:1"><span>Entradas</span><br><b style="color:var(--ganho)" id="d-ganhos">R$ 0</b></div>
@@ -53,7 +55,7 @@
 
     <div class="card">
         <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-sec)">
-            <span>Uso da Renda no Período</span>
+            <span>Uso da Renda</span>
             <b id="perc-uso">0%</b>
         </div>
         <div class="progresso-container"><div id="barra-uso" class="progresso-bar"></div></div>
@@ -80,7 +82,7 @@
         <div id="cats-all" style="margin-bottom:10px"></div>
         <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria">
         <select id="nova-cat-tipo"><option value="gasto">Saída</option><option value="ganho">Entrada</option></select>
-        <button class="btn-save" onclick="adicionarCategoria()">Criar</button>
+        <button style="background:var(--ganho); color:white; border:none; font-weight:bold" onclick="adicionarCategoria()">Criar</button>
     </div>
 </div>
 
@@ -95,7 +97,7 @@
     let regras = JSON.parse(localStorage.getItem('insight_regras')) || []; 
     let categorias = JSON.parse(localStorage.getItem('insight_categorias_v2')) || {
         gastos: ['Aluguel', 'Gasolina', 'Cartão crédito', 'Besteira', 'Empréstimos', 'Juliana', 'Água', 'Luz', 'Manutenção Carro', 'Comida', 'Saúde', 'Energético', 'Benjamim'],
-        ganhos: ['Uber', '99', 'Particular', 'Reembolso', 'Empréstimo']
+        ganhos: ['Uber', '99', 'Particular', 'Reembolso', 'Empréstimo', 'Cashback', 'Shopee']
     };
 
     function ir(aba, btn) {
@@ -108,10 +110,9 @@
         if(aba === 'config') renderConfig();
     }
 
-    function aplicarRegras(item) {
-        const descLimpa = item.desc.trim().toLowerCase();
-        const r = regras.find(reg => descLimpa === reg.termo);
-        return r ? r.categoria : 'Não Categorizado';
+    function parseDataBr(str) {
+        const parts = str.split('/');
+        return new Date(parts[2], parts[1] - 1, parts[0]);
     }
 
     function renderDash() {
@@ -121,9 +122,7 @@
         hoje.setHours(23, 59, 59, 999);
 
         let filteredDB = dbOrigem.filter(i => {
-            const dataParts = i.data.split('/');
-            const dataItem = new Date(dataParts[2], dataParts[1] - 1, dataParts[0]);
-            
+            const dataItem = parseDataBr(i.data);
             if(filtro === 'hoje') return dataItem <= hoje;
             if(filtro === 'mes') return dataItem.getMonth() === hoje.getMonth() && dataItem.getFullYear() === hoje.getFullYear();
             if(filtro === 'anterior') {
@@ -141,13 +140,16 @@
             else { vGastos += v; tGastos[cat] = (tGastos[cat] || 0) + v; }
         });
 
+        const saldo = vGanhos - vGastos;
+        document.getElementById('d-saldo').innerText = `R$ ${saldo.toLocaleString('pt-br',{minimumFractionDigits:2})}`;
+        document.getElementById('d-saldo').style.color = saldo >= 0 ? 'var(--ganho)' : 'var(--gasto)';
         document.getElementById('d-ganhos').innerText = `R$ ${vGanhos.toLocaleString('pt-br',{minimumFractionDigits:2})}`;
         document.getElementById('d-gastos').innerText = `R$ ${vGastos.toLocaleString('pt-br',{minimumFractionDigits:2})}`;
 
         const perc = vGanhos > 0 ? Math.round((vGastos / vGanhos) * 100) : 0;
         document.getElementById('perc-uso').innerText = perc + "%";
         document.getElementById('barra-uso').style.width = Math.min(perc, 100) + "%";
-        document.getElementById('barra-uso').style.background = perc > 100 ? 'var(--gasto)' : 'var(--ganho)';
+        document.getElementById('barra-uso').style.background = perc > 100 ? 'var(--gasto)' : 'var(--primary)';
 
         const listHtml = (obj, tipo) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([c, v]) => `
             <div class="item-lista" onclick="verDetalhes('${c}', '${tipo}')">
@@ -155,8 +157,8 @@
             </div>
         `).join('');
 
-        document.getElementById('lista-ganhos').innerHTML = listHtml(tGanhos, 'ganho') || "<small>Sem dados neste período</small>";
-        document.getElementById('lista-gastos').innerHTML = listHtml(tGastos, 'gasto') || "<small>Sem dados neste período</small>";
+        document.getElementById('lista-ganhos').innerHTML = listHtml(tGanhos, 'ganho') || "<small>Sem entradas</small>";
+        document.getElementById('lista-gastos').innerHTML = listHtml(tGastos, 'gasto') || "<small>Sem saídas</small>";
     }
 
     function verDetalhes(catNome, tipo) {
@@ -164,7 +166,24 @@
         const corpo = document.getElementById('modal-corpo');
         document.getElementById('modal-titulo').innerText = catNome;
         modal.style.display = 'flex';
-        const itens = dbOrigem.filter(i => i.tipo === tipo && aplicarRegras(i) === catNome);
+        
+        // Filtra os itens respeitando o período selecionado no dash
+        const filtro = document.getElementById('filtro-data').value;
+        const hoje = new Date();
+        const itens = dbOrigem.filter(i => {
+            const dataItem = parseDataBr(i.data);
+            const matchesCat = i.tipo === tipo && aplicarRegras(i) === catNome;
+            if(!matchesCat) return false;
+            if(filtro === 'hoje') return dataItem <= hoje;
+            if(filtro === 'mes') return dataItem.getMonth() === hoje.getMonth() && dataItem.getFullYear() === hoje.getFullYear();
+            if(filtro === 'anterior') {
+                const mesAnt = hoje.getMonth() === 0 ? 11 : hoje.getMonth() - 1;
+                const anoAnt = hoje.getMonth() === 0 ? hoje.getFullYear() - 1 : hoje.getFullYear();
+                return dataItem.getMonth() === mesAnt && dataItem.getFullYear() === anoAnt;
+            }
+            return true;
+        });
+
         corpo.innerHTML = itens.map(i => `
             <div style="padding:12px 0; border-bottom:1px solid #eee">
                 <small>${i.data}</small><br><strong>${i.desc}</strong><br>
@@ -172,7 +191,14 @@
             </div>`).join('');
     }
 
+    function aplicarRegras(item) {
+        const descLimpa = item.desc.trim().toLowerCase();
+        const r = regras.find(reg => descLimpa === reg.termo);
+        return r ? r.categoria : 'Não Categorizado';
+    }
+
     function fecharModal(e) { if(e.target.id === 'modal') e.target.style.display = 'none'; }
+    
     function renderCategorizacao() {
         dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
         const lista = document.getElementById('lista-pendentes');
