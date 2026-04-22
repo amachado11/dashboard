@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight v2.4 - Blindado</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Finanças Insight v2.5</title>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
@@ -15,36 +14,54 @@
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #d1d1d6; }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-sec); }
         .nav-btn.ativo { color: var(--primary); font-weight: bold; }
-        .item-pendente { padding: 15px 0; border-bottom: 1px solid #eee; }
-        .item-header { display: flex; flex-direction: column; margin-bottom: 8px; }
-        .item-desc { font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 4px; }
-        .select-cat { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid var(--primary); background: #f0f7ff; color: var(--primary); font-weight: 600; appearance: none; }
-        .badge { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: #eee; color: #666; display: inline-block; margin: 2px; font-weight: bold; }
-        .chart-box { height: 250px; margin: 10px auto; width: 250px; }
+        
+        .progresso-container { height: 10px; background: #E5E5EA; border-radius: 5px; margin: 10px 0; overflow: hidden; }
+        .progresso-bar { height: 100%; background: var(--gasto); transition: width 0.5s; }
+        
+        .item-lista { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; }
+        .item-lista:last-child { border: none; }
+        
+        .select-cat { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid var(--primary); background: #f0f7ff; color: var(--primary); font-weight: 600; margin-top: 5px; }
+        .badge { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: #eee; color: #666; display: inline-block; margin: 2px; }
+        
         input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px 0; font-size: 16px; outline: none; }
-        .btn-save { background: var(--ganho); color: white; border: none; font-weight: bold; margin-top: 10px; }
-        .tipo-tag { font-size: 9px; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; width: fit-content; margin-bottom: 4px; font-weight: 800; }
+        .btn-save { background: var(--ganho); color: white; border: none; font-weight: bold; }
+        .tipo-tag { font-size: 9px; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; font-weight: 800; margin-bottom: 5px; display: inline-block; }
     </style>
 </head>
 <body>
 
-<div class="header"><strong>Finanças Insight v2.4</strong></div>
+<div class="header"><strong>Finanças Insight v2.5</strong></div>
 
 <div id="aba-dash" class="aba ativa">
     <div style="display:flex; gap:10px; margin-bottom:15px">
         <div class="card" style="flex:1"><span>Entradas</span><br><b style="color:var(--ganho)" id="d-ganhos">R$ 0</b></div>
         <div class="card" style="flex:1"><span>Saídas</span><br><b style="color:var(--gasto)" id="d-gastos">R$ 0</b></div>
     </div>
+
     <div class="card">
-        <div style="text-align:center; font-weight:bold; margin-bottom:15px; color: var(--text-sec)">Gastos por Categoria</div>
-        <div class="chart-box"><canvas id="insightChart"></canvas></div>
-        <div id="lista-detalhada" style="margin-top:20px"></div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-sec)">
+            <span>Eficiência: Gastos vs Ganhos</span>
+            <b id="perc-uso">0%</b>
+        </div>
+        <div class="progresso-container"><div id="barra-uso" class="progresso-bar"></div></div>
+        <p id="msg-eficiencia" style="font-size:11px; text-align:center; margin:0; color:var(--text-sec)"></p>
+    </div>
+
+    <div class="card">
+        <strong style="color:var(--ganho)">Resumo de Ganhos</strong>
+        <div id="lista-ganhos" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+        <strong style="color:var(--gasto)">Resumo de Gastos</strong>
+        <div id="lista-gastos" style="margin-top:10px"></div>
     </div>
 </div>
 
 <div id="aba-cat" class="aba">
     <div class="card">
-        <strong>Categorizar Lançamentos</strong>
+        <strong>Pendentes de Categorização</strong>
         <div id="lista-pendentes"></div>
     </div>
 </div>
@@ -52,25 +69,15 @@
 <div id="aba-config" class="aba">
     <div class="card">
         <strong>Gerenciar Categorias</strong>
-        <div style="margin-bottom:10px">
-            <small style="color:var(--gasto)">SAÍDAS (GASTOS):</small>
-            <div id="cats-gastos"></div>
-        </div>
-        <div style="margin-bottom:15px">
-            <small style="color:var(--ganho)">ENTRADAS (GANHOS):</small>
-            <div id="cats-ganhos"></div>
-        </div>
+        <small>Gastos:</small> <div id="cats-gastos"></div><br>
+        <small>Ganhos:</small> <div id="cats-ganhos"></div>
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0">
-        <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria...">
+        <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria">
         <select id="nova-cat-tipo">
-            <option value="gasto">É um Gasto (Saída)</option>
-            <option value="ganho">É um Ganho (Entrada)</option>
+            <option value="gasto">Tipo: Gasto</option>
+            <option value="ganho">Tipo: Ganho</option>
         </select>
-        <button class="btn-save" onclick="adicionarCategoria()">Salvar Categoria</button>
-    </div>
-    <div class="card">
-        <strong>Regras Salvas</strong>
-        <div id="lista-regras" style="font-size:11px; color:#666"></div>
+        <button class="btn-save" onclick="adicionarCategoria()">Salvar Nova</button>
     </div>
 </div>
 
@@ -84,27 +91,10 @@
     let dbOrigem = [];
     let regras = JSON.parse(localStorage.getItem('insight_regras')) || []; 
     
-    // SISTEMA DE RECUPERAÇÃO BLINDADO
-    function carregarCategorias() {
-        const v2 = JSON.parse(localStorage.getItem('insight_categorias_v2'));
-        const v1 = JSON.parse(localStorage.getItem('insight_categorias')); // Tenta pegar da versão anterior
-        
-        if (v2 && v2.gastos) return v2;
-        
-        // Se sumiu mas tem a v1, migra os dados
-        if (v1 && Array.isArray(v1)) {
-            return { gastos: v1, ganhos: ['Uber', '99', 'Particular'] };
-        }
-
-        // Se tudo falhar, usa o backup das suas fotos
-        return {
-            gastos: ['Gasolina', 'Energético', 'Aluguel', 'Luz', 'Água', 'Manutenção Carro', 'Juliana', 'Benjamim', 'Comida', 'Besteira', 'Empréstimos', 'Cartão crédito', 'Saúde'],
-            ganhos: ['Uber', '99', 'Particular', 'Reembolso']
-        };
-    }
-
-    let categorias = carregarCategorias();
-    let meuChart = null;
+    let categorias = JSON.parse(localStorage.getItem('insight_categorias_v2')) || {
+        gastos: ['Aluguel', 'Gasolina', 'Cartão crédito', 'Besteira', 'Empréstimos', 'Juliana', 'Água', 'Luz', 'Manutenção Carro', 'Comida', 'Saúde', 'Energético', 'Benjamim'],
+        ganhos: ['Uber', '99', 'Particular', 'Reembolso']
+    };
 
     function ir(aba, btn) {
         document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
@@ -120,8 +110,7 @@
         const nome = document.getElementById('nova-cat-nome').value.trim();
         const tipo = document.getElementById('nova-cat-tipo').value;
         if(!nome) return;
-        if(tipo === 'gasto') { if(!categorias.gastos.includes(nome)) categorias.gastos.push(nome); }
-        else { if(!categorias.ganhos.includes(nome)) categorias.ganhos.push(nome); }
+        if(tipo === 'gasto') categorias.gastos.push(nome); else categorias.ganhos.push(nome);
         localStorage.setItem('insight_categorias_v2', JSON.stringify(categorias));
         document.getElementById('nova-cat-nome').value = "";
         renderConfig();
@@ -130,14 +119,17 @@
     function salvarRegra(termo, selectElement, tipoOriginal) {
         const catDestino = selectElement.value;
         if(!catDestino) return;
-        regras = regras.filter(r => r.termo.toLowerCase() !== termo.toLowerCase());
-        regras.push({ termo: termo.toLowerCase(), categoria: catDestino, tipo: tipoOriginal });
+        // Limpeza rigorosa para evitar o erro do item que não some
+        const termoLimpo = termo.trim().toLowerCase();
+        regras = regras.filter(r => r.termo !== termoLimpo);
+        regras.push({ termo: termoLimpo, categoria: catDestino, tipo: tipoOriginal });
         localStorage.setItem('insight_regras', JSON.stringify(regras));
         renderCategorizacao();
     }
 
     function aplicarRegras(item) {
-        const regraEncontrada = regras.find(r => item.desc.toLowerCase().trim() === r.termo.toLowerCase().trim());
+        const descLimpa = item.desc.trim().toLowerCase();
+        const regraEncontrada = regras.find(r => descLimpa === r.termo);
         return regraEncontrada ? regraEncontrada.categoria : 'Não Categorizado';
     }
 
@@ -149,30 +141,24 @@
         let pendentes = [];
         dbOrigem.forEach(i => {
             if(aplicarRegras(i) === 'Não Categorizado') {
-                if(!pendentes.some(p => p.desc.toLowerCase() === i.desc.toLowerCase())) {
-                    pendentes.push(i);
-                }
+                if(!pendentes.some(p => p.desc.trim().toLowerCase() === i.desc.trim().toLowerCase())) pendentes.push(i);
             }
         });
 
         if(pendentes.length === 0) {
-            lista.innerHTML = "<div style='text-align:center; padding:30px; color:var(--ganho)'><b>✨ Tudo Categorizado!</b></div>";
+            lista.innerHTML = "<p style='text-align:center; padding:20px; color:var(--ganho)'><b>✨ Tudo Categorizado!</b></p>";
             return;
         }
 
         pendentes.forEach(item => {
             let listaOpcoes = (item.tipo === 'ganho' ? categorias.ganhos : categorias.gastos);
             let options = listaOpcoes.map(c => `<option value="${c}">${c}</option>`).join('');
-            
             lista.innerHTML += `
-                <div class="item-pendente">
-                    <div class="item-header">
-                        <span class="tipo-tag" style="background:${item.tipo==='ganho'?'#34C75922':'#FF3B3022'}; color:${item.tipo==='ganho'?'var(--ganho)':'var(--gasto)'}">${item.tipo==='ganho'?'Receita':'Despesa'}</span>
-                        <span class="item-desc">${item.desc}</span>
-                    </div>
+                <div style="padding:15px 0; border-bottom:1px solid #eee">
+                    <span class="tipo-tag" style="background:${item.tipo==='ganho'?'#34C75922':'#FF3B3022'}; color:${item.tipo==='ganho'?'var(--ganho)':'var(--gasto)'}">${item.tipo==='ganho'?'Entrada':'Saída'}</span><br>
+                    <strong>${item.desc}</strong>
                     <select class="select-cat" onchange="salvarRegra('${item.desc}', this, '${item.tipo}')">
-                        <option value="">O que é isso? Escolha...</option>
-                        ${options}
+                        <option value="">Categorizar como...</option>${options}
                     </select>
                 </div>`;
         });
@@ -181,65 +167,38 @@
     function renderDash() {
         dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
         let totaisGastos = {};
-        let totalGanhosValor = 0;
-        let totalGastosValor = 0;
+        let totaisGanhos = {};
+        let vGanhos = 0, vGastos = 0;
 
         dbOrigem.forEach(i => {
             const v = parseFloat(i.valor);
             const cat = aplicarRegras(i);
-            if(i.tipo === 'ganho') {
-                totalGanhosValor += v;
-            } else { 
-                totalGastosValor += v;
-                totaisGastos[cat] = (totaisGastos[cat] || 0) + v; 
-            }
+            if(i.tipo === 'ganho') { vGanhos += v; totaisGanhos[cat] = (totaisGanhos[cat] || 0) + v; }
+            else { vGastos += v; totaisGastos[cat] = (totaisGastos[cat] || 0) + v; }
         });
 
-        document.getElementById('d-ganhos').innerText = `R$ ${totalGanhosValor.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
-        document.getElementById('d-gastos').innerText = `R$ ${totalGastosValor.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
+        document.getElementById('d-ganhos').innerText = `R$ ${vGanhos.toLocaleString('pt-br',{minimumFractionDigits:2})}`;
+        document.getElementById('d-gastos').innerText = `R$ ${vGastos.toLocaleString('pt-br',{minimumFractionDigits:2})}`;
 
-        const ctx = document.getElementById('insightChart').getContext('2d');
-        const labels = Object.keys(totaisGastos).filter(k => totaisGastos[k] > 0).sort((a,b) => totaisGastos[b] - totaisGastos[a]);
-        const valores = labels.map(l => totaisGastos[l]);
+        // Cálculo Percentual
+        const perc = vGanhos > 0 ? Math.round((vGastos / vGanhos) * 100) : 0;
+        document.getElementById('perc-uso').innerText = perc + "%";
+        document.getElementById('barra-uso').style.width = Math.min(perc, 100) + "%";
+        document.getElementById('barra-uso').style.background = perc > 90 ? 'var(--gasto)' : 'var(--primary)';
+        document.getElementById('msg-eficiencia').innerText = vGanhos > vGastos ? `Você economizou ${(100-perc)}% do que ganhou.` : `Seus gastos superaram os ganhos em ${perc-100}%!`;
 
-        if(meuChart) meuChart.destroy();
-        meuChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{ 
-                    data: valores, 
-                    backgroundColor: ['#FF3B30', '#5AC8FA', '#FFCC00', '#AF52DE', '#FF9500', '#5856D6', '#007AFF', '#34C759', '#8E8E93'],
-                    borderWidth: 2
-                }]
-            },
-            options: { cutout: '72%', plugins: { legend: { display: false } } }
-        });
-
-        const ld = document.getElementById('lista-detalhada');
-        ld.innerHTML = labels.map(l => `
-            <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f2f2f7; font-size:14px">
-                <span>${l}</span>
-                <b>R$ ${totaisGastos[l].toLocaleString('pt-br', {minimumFractionDigits: 2})}</b>
-            </div>
+        // Renderizar Listas
+        const formatarLista = (obj) => Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([cat, val]) => `
+            <div class="item-lista"><span>${cat}</span><b>R$ ${val.toLocaleString('pt-br',{minimumFractionDigits:2})}</b></div>
         `).join('');
+
+        document.getElementById('lista-ganhos').innerHTML = formatarLista(totaisGanhos) || "Nenhum ganho categorizado.";
+        document.getElementById('lista-gastos').innerHTML = formatarLista(totaisGastos) || "Nenhum gasto categorizado.";
     }
 
     function renderConfig() {
-        document.getElementById('cats-gastos').innerHTML = categorias.gastos.map(c => `<span class="badge" style="border-bottom: 2px solid var(--gasto)">${c}</span>`).join('');
-        document.getElementById('cats-ganhos').innerHTML = categorias.ganhos.map(c => `<span class="badge" style="border-bottom: 2px solid var(--ganho)">${c}</span>`).join('');
-        const r = document.getElementById('lista-regras');
-        r.innerHTML = regras.map((reg, idx) => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px; padding:5px; border-bottom:1px solid #eee">
-                <span>"${reg.termo}" ➔ <b>${reg.categoria}</b></span>
-                <span onclick="removerRegra(${idx})" style="color:red">✕</span>
-            </div>`).join('');
-    }
-
-    function removerRegra(idx) {
-        regras.splice(idx, 1);
-        localStorage.setItem('insight_regras', JSON.stringify(regras));
-        renderConfig();
+        document.getElementById('cats-gastos').innerHTML = categorias.gastos.map(c => `<span class="badge">${c}</span>`).join('');
+        document.getElementById('cats-ganhos').innerHTML = categorias.ganhos.map(c => `<span class="badge">${c}</span>`).join('');
     }
 
     window.onload = () => { renderDash(); };
