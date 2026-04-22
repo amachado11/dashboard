@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight v2.1</title>
+    <title>Finanças Insight v2.2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; }
@@ -12,36 +12,30 @@
         .aba { display: none; padding: 15px; }
         .aba.ativa { display: block; }
         .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
-        /* Nav */
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #d1d1d6; }
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-sec); }
         .nav-btn.ativo { color: var(--primary); font-weight: bold; }
-
-        /* Categorização */
         .item-pendente { padding: 15px 0; border-bottom: 1px solid #eee; }
         .item-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
-        .select-cat { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--primary); background: #f0f7ff; color: var(--primary); font-weight: 500; }
-        
+        .select-cat { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--primary); background: #f0f7ff; color: var(--primary); font-weight: 500; appearance: none; }
         .badge { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: #eee; color: #666; display: inline-block; margin: 2px; }
         .chart-box { height: 250px; margin: 10px auto; width: 250px; }
-        
         input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px 0; font-size: 16px; outline: none; }
         .btn-save { background: var(--ganho); color: white; border: none; font-weight: bold; margin-top: 10px; }
+        .tipo-tag { font-size: 10px; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <strong id="titulo-aba">Finanças Insight</strong>
-</div>
+<div class="header"><strong>Finanças Insight v2.2</strong></div>
 
 <div id="aba-dash" class="aba ativa">
     <div style="display:flex; gap:10px; margin-bottom:15px">
-        <div class="card" style="flex:1"><span>Ganhos</span><br><b style="color:var(--ganho)" id="d-ganhos">R$ 0</b></div>
-        <div class="card" style="flex:1"><span>Gastos</span><br><b style="color:var(--gasto)" id="d-gastos">R$ 0</b></div>
+        <div class="card" style="flex:1"><span>Total Ganhos</span><br><b style="color:var(--ganho)" id="d-ganhos">R$ 0</b></div>
+        <div class="card" style="flex:1"><span>Total Gastos</span><br><b style="color:var(--gasto)" id="d-gastos">R$ 0</b></div>
     </div>
     <div class="card">
+        <div style="text-align:center; font-weight:bold; margin-bottom:10px;">Distribuição de Gastos</div>
         <div class="chart-box"><canvas id="insightChart"></canvas></div>
         <div id="lista-detalhada" style="margin-top:20px"></div>
     </div>
@@ -50,7 +44,7 @@
 <div id="aba-cat" class="aba">
     <div class="card">
         <strong>Categorização Inteligente</strong>
-        <p style="font-size:12px; color:var(--text-sec); margin-bottom:15px">Selecione o destino para cada descrição encontrada no App 1:</p>
+        <p style="font-size:12px; color:var(--text-sec); margin-bottom:15px">Classifique entradas e saídas do App 1:</p>
         <div id="lista-pendentes"></div>
     </div>
 </div>
@@ -58,12 +52,23 @@
 <div id="aba-config" class="aba">
     <div class="card">
         <strong>Gerenciar Categorias</strong>
-        <div id="minhas-cats" style="margin: 15px 0;"></div>
-        <input type="text" id="nova-cat-nome" placeholder="Nome (Ex: Combustível, Manutenção...)">
+        <div style="margin-bottom:10px">
+            <small>Categorias de Gastos:</small>
+            <div id="cats-gastos"></div>
+        </div>
+        <div style="margin-bottom:15px">
+            <small>Categorias de Ganhos:</small>
+            <div id="cats-ganhos"></div>
+        </div>
+        <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria">
+        <select id="nova-cat-tipo">
+            <option value="gasto">Tipo: Gasto (Saída)</option>
+            <option value="ganho">Tipo: Ganho (Entrada)</option>
+        </select>
         <button class="btn-save" onclick="adicionarCategoria()">Criar Nova Categoria</button>
     </div>
     <div class="card">
-        <strong>Regras Criadas</strong>
+        <strong>Regras Ativas</strong>
         <div id="lista-regras" style="font-size:13px; margin-top:10px"></div>
     </div>
 </div>
@@ -77,7 +82,10 @@
 <script>
     let dbOrigem = [];
     let regras = JSON.parse(localStorage.getItem('insight_regras')) || []; 
-    let categorias = JSON.parse(localStorage.getItem('insight_categorias')) || ['Operacional', 'Pessoal', 'Fixos'];
+    let categorias = JSON.parse(localStorage.getItem('insight_categorias_v2')) || {
+        gastos: ['Gasolina', 'Manutenção Carro', 'Aluguel', 'Luz', 'Água', 'Comida', 'Besteira', 'Empréstimos', 'Cartão crédito', 'Saúde'],
+        ganhos: ['Uber', '99', 'Particular']
+    };
     let meuChart = null;
 
     function ir(aba, btn) {
@@ -85,7 +93,6 @@
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
         document.getElementById('aba-' + aba).classList.add('ativa');
         btn.classList.add('ativo');
-        
         if(aba === 'dash') renderDash();
         if(aba === 'cat') renderCategorizacao();
         if(aba === 'config') renderConfig();
@@ -93,31 +100,25 @@
 
     function adicionarCategoria() {
         const nome = document.getElementById('nova-cat-nome').value.trim();
-        if(!nome || categorias.includes(nome)) return;
-        categorias.push(nome);
-        localStorage.setItem('insight_categorias', JSON.stringify(categorias));
+        const tipo = document.getElementById('nova-cat-tipo').value;
+        if(!nome) return;
+        if(tipo === 'gasto') { if(!categorias.gastos.includes(nome)) categorias.gastos.push(nome); }
+        else { if(!categorias.ganhos.includes(nome)) categorias.ganhos.push(nome); }
+        localStorage.setItem('insight_categorias_v2', JSON.stringify(categorias));
         document.getElementById('nova-cat-nome').value = "";
         renderConfig();
     }
 
-    // Criar regra usando o Drop-down
-    function salvarRegra(termo, selectElement) {
+    function salvarRegra(termo, selectElement, tipoOriginal) {
         const catDestino = selectElement.value;
         if(!catDestino) return;
-
-        // Remover regra antiga se houver para o mesmo termo
         regras = regras.filter(r => r.termo !== termo.toLowerCase());
-        
-        regras.push({ termo: termo.toLowerCase(), categoria: catDestino });
+        regras.push({ termo: termo.toLowerCase(), categoria: catDestino, tipo: tipoOriginal });
         localStorage.setItem('insight_regras', JSON.stringify(regras));
-        
-        // Feedback visual rápido
-        selectElement.style.borderColor = "var(--ganho)";
-        setTimeout(() => { renderCategorizacao(); }, 500);
+        renderCategorizacao();
     }
 
     function aplicarRegras(item) {
-        if(item.tipo === 'ganho') return 'Ganhos';
         const regraEncontrada = regras.find(r => item.desc.toLowerCase().includes(r.termo));
         return regraEncontrada ? regraEncontrada.categoria : 'Não Categorizado';
     }
@@ -129,22 +130,26 @@
         
         let pendentes = [];
         dbOrigem.forEach(i => {
-            if(i.tipo === 'gasto' && aplicarRegras(i) === 'Não Categorizado') {
-                if(!pendentes.includes(i.desc)) pendentes.push(i.desc);
+            if(aplicarRegras(i) === 'Não Categorizado') {
+                if(!pendentes.some(p => p.desc === i.desc)) pendentes.push(i);
             }
         });
 
         if(pendentes.length === 0) {
-            lista.innerHTML = "<div style='text-align:center; padding:20px; color:var(--ganho)'><b>✨ Tudo organizado!</b><br>Não há novos itens para categorizar.</div>";
+            lista.innerHTML = "<div style='text-align:center; padding:20px; color:var(--ganho)'><b>✨ Tudo organizado!</b></div>";
             return;
         }
 
-        pendentes.forEach(desc => {
-            let options = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+        pendentes.forEach(item => {
+            let options = (item.tipo === 'ganho' ? categorias.ganhos : categorias.gastos)
+                .map(c => `<option value="${c}">${c}</option>`).join('');
+            
             lista.innerHTML += `
                 <div class="item-pendente">
-                    <div class="item-header"><span>${desc}</span></div>
-                    <select class="select-cat" onchange="salvarRegra('${desc}', this)">
+                    <div class="item-header">
+                        <span><span class="tipo-tag" style="background:${item.tipo==='ganho'?'#34C75922':'#FF3B3022'}; color:${item.tipo==='ganho'?'var(--ganho)':'var(--gasto)'}">${item.tipo==='ganho'?'Entrada':'Saída'}</span>${item.desc}</span>
+                    </div>
+                    <select class="select-cat" onchange="salvarRegra('${item.desc}', this, '${item.tipo}')">
                         <option value="">Selecionar categoria...</option>
                         ${options}
                     </select>
@@ -154,21 +159,23 @@
 
     function renderDash() {
         dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
-        let totais = { 'Ganhos': 0, 'Não Categorizado': 0 };
-        categorias.forEach(c => totais[c] = 0);
+        let totaisGastos = {};
+        let totalGanhosValor = 0;
 
         dbOrigem.forEach(i => {
-            const catFinal = aplicarRegras(i);
-            totais[catFinal] = (totais[catFinal] || 0) + parseFloat(i.valor);
+            const v = parseFloat(i.valor);
+            const cat = aplicarRegras(i);
+            if(i.tipo === 'ganho') totalGanhosValor += v;
+            else { totaisGastos[cat] = (totaisGastos[cat] || 0) + v; }
         });
 
-        document.getElementById('d-ganhos').innerText = `R$ ${totais['Ganhos'].toLocaleString()}`;
-        const totalGastos = Object.keys(totais).filter(k => k !== 'Ganhos').reduce((acc, k) => acc + totais[k], 0);
-        document.getElementById('d-gastos').innerText = `R$ ${totalGastos.toLocaleString()}`;
+        document.getElementById('d-ganhos').innerText = `R$ ${totalGanhosValor.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
+        const totalGastosValor = Object.values(totaisGastos).reduce((a, b) => a + b, 0);
+        document.getElementById('d-gastos').innerText = `R$ ${totalGastosValor.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
 
         const ctx = document.getElementById('insightChart').getContext('2d');
-        const labels = Object.keys(totais).filter(k => k !== 'Ganhos' && totais[k] > 0);
-        const valores = labels.map(l => totais[l]);
+        const labels = Object.keys(totaisGastos).filter(k => totaisGastos[k] > 0).sort((a,b) => totaisGastos[b] - totaisGastos[a]);
+        const valores = labels.map(l => totaisGastos[l]);
 
         if(meuChart) meuChart.destroy();
         meuChart = new Chart(ctx, {
@@ -177,30 +184,30 @@
                 labels: labels,
                 datasets: [{ 
                     data: valores, 
-                    backgroundColor: ['#FF3B30', '#5AC8FA', '#FFCC00', '#AF52DE', '#FF9500', '#5856D6', '#007AFF', '#8E8E93'],
+                    backgroundColor: ['#FF3B30', '#5AC8FA', '#FFCC00', '#AF52DE', '#FF9500', '#5856D6', '#007AFF', '#34C759', '#8E8E93', '#E5E5EA'],
                     borderWidth: 2
                 }]
             },
-            options: { cutout: '70%', plugins: { legend: { display: true, position: 'bottom' } } }
+            options: { cutout: '70%', plugins: { legend: { display: false } } }
         });
 
-        // Lista Detalhada abaixo do gráfico
         const ld = document.getElementById('lista-detalhada');
         ld.innerHTML = labels.map(l => `
-            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:14px">
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee; font-size:14px">
                 <span>${l}</span>
-                <b>R$ ${totais[l].toFixed(2)}</b>
+                <b>R$ ${totaisGastos[l].toLocaleString('pt-br', {minimumFractionDigits: 2})}</b>
             </div>
         `).join('');
     }
 
     function renderConfig() {
-        document.getElementById('minhas-cats').innerHTML = categorias.map(c => `<span class="badge">${c}</span>`).join('');
+        document.getElementById('cats-gastos').innerHTML = categorias.gastos.map(c => `<span class="badge" style="border-left: 3px solid var(--gasto)">${c}</span>`).join('');
+        document.getElementById('cats-ganhos').innerHTML = categorias.ganhos.map(c => `<span class="badge" style="border-left: 3px solid var(--ganho)">${c}</span>`).join('');
         const r = document.getElementById('lista-regras');
         r.innerHTML = regras.map((reg, idx) => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; background:#f9f9f9; padding:8px; border-radius:6px">
-                <span>"${reg.termo}" ➔ <b>${reg.categoria}</b></span>
-                <span onclick="removerRegra(${idx})" style="color:red; font-weight:bold">X</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; background:#f9f9f9; padding:10px; border-radius:8px">
+                <span style="font-size:12px">"${reg.termo}" ➔ <b style="color:var(--primary)">${reg.categoria}</b></span>
+                <span onclick="removerRegra(${idx})" style="color:red; font-weight:bold; padding:0 5px">✕</span>
             </div>`).join('');
     }
 
