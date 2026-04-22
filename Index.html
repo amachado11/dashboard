@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight v2.3</title>
+    <title>Finanças Insight v2.4 - Blindado</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; }
@@ -28,7 +28,7 @@
 </head>
 <body>
 
-<div class="header"><strong>Finanças Insight v2.3</strong></div>
+<div class="header"><strong>Finanças Insight v2.4</strong></div>
 
 <div id="aba-dash" class="aba ativa">
     <div style="display:flex; gap:10px; margin-bottom:15px">
@@ -36,7 +36,7 @@
         <div class="card" style="flex:1"><span>Saídas</span><br><b style="color:var(--gasto)" id="d-gastos">R$ 0</b></div>
     </div>
     <div class="card">
-        <div style="text-align:center; font-weight:bold; margin-bottom:15px; color: var(--text-sec)">Gasto por Categoria</div>
+        <div style="text-align:center; font-weight:bold; margin-bottom:15px; color: var(--text-sec)">Gastos por Categoria</div>
         <div class="chart-box"><canvas id="insightChart"></canvas></div>
         <div id="lista-detalhada" style="margin-top:20px"></div>
     </div>
@@ -45,14 +45,13 @@
 <div id="aba-cat" class="aba">
     <div class="card">
         <strong>Categorizar Lançamentos</strong>
-        <p style="font-size:12px; color:var(--text-sec); margin-bottom:15px">Defina onde cada item do seu histórico se encaixa:</p>
         <div id="lista-pendentes"></div>
     </div>
 </div>
 
 <div id="aba-config" class="aba">
     <div class="card">
-        <strong>Minhas Categorias</strong>
+        <strong>Gerenciar Categorias</strong>
         <div style="margin-bottom:10px">
             <small style="color:var(--gasto)">SAÍDAS (GASTOS):</small>
             <div id="cats-gastos"></div>
@@ -62,7 +61,7 @@
             <div id="cats-ganhos"></div>
         </div>
         <hr style="border:0; border-top:1px solid #eee; margin:15px 0">
-        <input type="text" id="nova-cat-nome" placeholder="Ex: Manutenção, Uber, Aluguel...">
+        <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria...">
         <select id="nova-cat-tipo">
             <option value="gasto">É um Gasto (Saída)</option>
             <option value="ganho">É um Ganho (Entrada)</option>
@@ -70,8 +69,8 @@
         <button class="btn-save" onclick="adicionarCategoria()">Salvar Categoria</button>
     </div>
     <div class="card">
-        <strong>Regras de Inteligência</strong>
-        <div id="lista-regras" style="font-size:12px; margin-top:10px"></div>
+        <strong>Regras Salvas</strong>
+        <div id="lista-regras" style="font-size:11px; color:#666"></div>
     </div>
 </div>
 
@@ -85,12 +84,26 @@
     let dbOrigem = [];
     let regras = JSON.parse(localStorage.getItem('insight_regras')) || []; 
     
-    // Recuperação de categorias com fallback para não sumir nada
-    let categorias = JSON.parse(localStorage.getItem('insight_categorias_v2')) || {
-        gastos: ['Gasolina', 'Comida', 'Aluguel', 'Luz', 'Água', 'Saúde'],
-        ganhos: ['Uber', '99', 'Particular']
-    };
+    // SISTEMA DE RECUPERAÇÃO BLINDADO
+    function carregarCategorias() {
+        const v2 = JSON.parse(localStorage.getItem('insight_categorias_v2'));
+        const v1 = JSON.parse(localStorage.getItem('insight_categorias')); // Tenta pegar da versão anterior
+        
+        if (v2 && v2.gastos) return v2;
+        
+        // Se sumiu mas tem a v1, migra os dados
+        if (v1 && Array.isArray(v1)) {
+            return { gastos: v1, ganhos: ['Uber', '99', 'Particular'] };
+        }
 
+        // Se tudo falhar, usa o backup das suas fotos
+        return {
+            gastos: ['Gasolina', 'Energético', 'Aluguel', 'Luz', 'Água', 'Manutenção Carro', 'Juliana', 'Benjamim', 'Comida', 'Besteira', 'Empréstimos', 'Cartão crédito', 'Saúde'],
+            ganhos: ['Uber', '99', 'Particular', 'Reembolso']
+        };
+    }
+
+    let categorias = carregarCategorias();
     let meuChart = null;
 
     function ir(aba, btn) {
@@ -117,11 +130,9 @@
     function salvarRegra(termo, selectElement, tipoOriginal) {
         const catDestino = selectElement.value;
         if(!catDestino) return;
-        // Remove regra antiga se existir para evitar duplicidade
         regras = regras.filter(r => r.termo.toLowerCase() !== termo.toLowerCase());
         regras.push({ termo: termo.toLowerCase(), categoria: catDestino, tipo: tipoOriginal });
         localStorage.setItem('insight_regras', JSON.stringify(regras));
-        // Recarrega a lista para o item sumir imediatamente
         renderCategorizacao();
     }
 
@@ -145,7 +156,7 @@
         });
 
         if(pendentes.length === 0) {
-            lista.innerHTML = "<div style='text-align:center; padding:30px; color:var(--ganho)'><b>✨ Tudo Categorizado!</b><br><small>Seus dados estão prontos no resumo.</small></div>";
+            lista.innerHTML = "<div style='text-align:center; padding:30px; color:var(--ganho)'><b>✨ Tudo Categorizado!</b></div>";
             return;
         }
 
@@ -160,7 +171,7 @@
                         <span class="item-desc">${item.desc}</span>
                     </div>
                     <select class="select-cat" onchange="salvarRegra('${item.desc}', this, '${item.tipo}')">
-                        <option value="">O que é isso? Clique aqui...</option>
+                        <option value="">O que é isso? Escolha...</option>
                         ${options}
                     </select>
                 </div>`;
@@ -209,7 +220,7 @@
         ld.innerHTML = labels.map(l => `
             <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f2f2f7; font-size:14px">
                 <span>${l}</span>
-                <b style="color:var(--text)">R$ ${totaisGastos[l].toLocaleString('pt-br', {minimumFractionDigits: 2})}</b>
+                <b>R$ ${totaisGastos[l].toLocaleString('pt-br', {minimumFractionDigits: 2})}</b>
             </div>
         `).join('');
     }
@@ -219,9 +230,9 @@
         document.getElementById('cats-ganhos').innerHTML = categorias.ganhos.map(c => `<span class="badge" style="border-bottom: 2px solid var(--ganho)">${c}</span>`).join('');
         const r = document.getElementById('lista-regras');
         r.innerHTML = regras.map((reg, idx) => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; background:#f9f9f9; padding:12px; border-radius:10px; border-left: 4px solid var(--primary)">
-                <span style="font-size:12px">"${reg.termo}" ➔ <b style="color:var(--primary)">${reg.categoria}</b></span>
-                <span onclick="removerRegra(${idx})" style="color:red; font-weight:bold; padding:0 10px">✕</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px; padding:5px; border-bottom:1px solid #eee">
+                <span>"${reg.termo}" ➔ <b>${reg.categoria}</b></span>
+                <span onclick="removerRegra(${idx})" style="color:red">✕</span>
             </div>`).join('');
     }
 
