@@ -3,314 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight - Dashboard</title>
+    <title>Finanças Insight v2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg: #F8F9FA;
-            --card: #FFFFFF;
-            --primary: #007AFF;
-            --text-main: #1C1C1E;
-            --text-sec: #8E8E93;
-            --ganho: #34C759;
-            --gasto: #FF3B30;
-        }
+        :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; --warning: #FF9500; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
+        .header { background: white; padding: 20px; border-bottom: 1px solid #d1d1d6; position: sticky; top: 0; z-index: 10; }
+        .aba { display: none; padding: 15px; }
+        .aba.ativa { display: block; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        /* Nav */
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 75px; border-top: 1px solid #d1d1d6; }
+        .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-sec); }
+        .nav-btn.ativo { color: var(--primary); font-weight: bold; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            padding-bottom: 50px;
-        }
-
-        .header {
-            margin-bottom: 25px;
-            text-align: left;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin: 0;
-            font-weight: 700;
-        }
-
-        .header p {
-            color: var(--text-sec);
-            margin: 5px 0 0 0;
-            font-size: 14px;
-        }
-
-        /* Seletor de Mês */
-        .filter-box {
-            background: var(--card);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        input[type="month"] {
-            border: 1px solid #E5E5EA;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-        }
-
-        /* Scorecards */
-        .grid-cards {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        }
-
-        .card-full {
-            grid-column: span 2;
-            text-align: center;
-        }
-
-        .card span {
-            font-size: 12px;
-            color: var(--text-sec);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .card b {
-            font-size: 20px;
-            display: block;
-        }
-
+        /* Categorização */
+        .item-pendente { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #eee; color: #666; }
+        .btn-cat { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; }
+        
         /* Gráfico */
-        .chart-container {
-            position: relative;
-            margin: auto;
-            height: 250px;
-            width: 250px;
-            margin-bottom: 20px;
-        }
-
-        /* Legenda Customizada */
-        .legend-list {
-            margin-top: 20px;
-        }
-
-        .legend-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #F2F2F7;
-        }
-
-        .legend-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .val {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .perc {
-            color: var(--text-sec);
-            font-size: 12px;
-            margin-left: 5px;
-        }
-
-        /* Badge de Lucro */
-        .badge-lucro {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        @media (max-width: 380px) {
-            .card b { font-size: 18px; }
-        }
+        .chart-box { height: 250px; margin: 20px auto; width: 250px; }
+        
+        input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px 0; font-size: 16px; }
+        .btn-save { background: var(--ganho); color: white; border: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>Finanças Insight</h1>
-    <p>Relatório de Performance Mensal</p>
+    <h2 id="titulo-aba" style="margin:0; font-size: 18px;">Dashboard Insight</h2>
 </div>
 
-<div class="filter-box">
-    <span>Período de Análise</span>
-    <input type="month" id="mes-filtro" onchange="atualizarDashboard()">
-</div>
-
-<div class="grid-cards">
-    <div class="card">
-        <span>Entradas</span>
-        <b style="color: var(--ganho);" id="total-ganhos">R$ 0,00</b>
+<div id="aba-dash" class="aba ativa">
+    <div style="display:flex; gap:10px; margin-bottom:15px">
+        <div class="card" style="flex:1"><span>Ganhos</span><br><b style="color:var(--ganho)" id="d-ganhos">R$ 0</b></div>
+        <div class="card" style="flex:1"><span>Gastos</span><br><b style="color:var(--gasto)" id="d-gastos">R$ 0</b></div>
     </div>
     <div class="card">
-        <span>Saídas</span>
-        <b style="color: var(--gasto);" id="total-gastos">R$ 0,00</b>
-    </div>
-    <div class="card card-full">
-        <span>Saldo Líquido</span>
-        <b id="saldo-final" style="font-size: 28px;">R$ 0,00</b>
-        <div id="badge-container"></div>
+        <div class="chart-box"><canvas id="insightChart"></canvas></div>
+        <div id="lista-detalhada"></div>
     </div>
 </div>
 
-<div class="card">
-    <span style="text-align: center; margin-bottom: 20px;">Distribuição de Gastos</span>
-    <div class="chart-container">
-        <canvas id="pizzaChart"></canvas>
+<div id="aba-cat" class="aba">
+    <div class="card">
+        <strong>Itens Pendentes do App 1</strong>
+        <p style="font-size:12px; color:var(--text-sec)">Clique para criar uma regra de categorização inteligente.</p>
+        <div id="lista-pendentes"></div>
     </div>
-    <div id="legendas" class="legend-list"></div>
+</div>
+
+<div id="aba-config" class="aba">
+    <div class="card">
+        <strong>Suas Categorias</strong>
+        <div id="minhas-cats" style="margin: 10px 0;"></div>
+        <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria (Ex: Manutenção)">
+        <button class="btn-save" onclick="adicionarCategoria()">+ Adicionar Categoria</button>
+    </div>
+    <div class="card" style="background:#fff5f5">
+        <strong style="color:var(--gasto)">Regras Ativas</strong>
+        <div id="lista-regras" style="font-size:12px; margin-top:10px"></div>
+    </div>
+</div>
+
+<div class="nav">
+    <button class="nav-btn ativo" onclick="ir('dash', this)">📊<br>Dashboard</button>
+    <button class="nav-btn" onclick="ir('cat', this)">🔍<br>Categorizar</button>
+    <button class="nav-btn" onclick="ir('config', this)">⚙️<br>Config</button>
 </div>
 
 <script>
-    let meuGrafico = null;
-    const coresBase = {
-        'Salário': '#34C759',
-        'Alimentação': '#FF9500',
-        'Transporte': '#5AC8FA',
-        'Contas': '#FF3B30',
-        'Mercado': '#FFCC00',
-        'Outros': '#AF52DE'
-    };
+    // Bancos de Dados
+    let dbOrigem = [];
+    let regras = JSON.parse(localStorage.getItem('insight_regras')) || []; 
+    let categorias = JSON.parse(localStorage.getItem('insight_categorias')) || ['Operacional', 'Pessoal', 'Fixos'];
+    let meuChart = null;
 
-    function atualizarDashboard() {
-        const db = JSON.parse(localStorage.getItem('financas_v_final')) || [];
-        const mesSel = document.getElementById('mes-filtro').value;
+    function ir(aba, btn) {
+        document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+        document.getElementById('aba-' + aba).classList.add('ativa');
+        btn.classList.add('ativo');
         
-        const filtrados = db.filter(i => i.data.startsWith(mesSel));
-        
-        let ganhos = 0;
-        let gastos = 0;
-        let cats = {};
+        if(aba === 'dash') renderDash();
+        if(aba === 'cat') renderCategorizacao();
+        if(aba === 'config') renderConfig();
+    }
 
-        filtrados.forEach(i => {
-            let v = parseFloat(i.valor);
-            if(i.tipo === 'ganho') {
-                ganhos += v;
-            } else {
-                gastos += v;
-                cats[i.cat] = (cats[i.cat] || 0) + v;
+    // --- LÓGICA DE CATEGORIZAÇÃO ---
+    function adicionarCategoria() {
+        const nome = document.getElementById('nova-cat-nome').value.trim();
+        if(!nome) return;
+        categorias.push(nome);
+        localStorage.setItem('insight_categorias', JSON.stringify(categorias));
+        document.getElementById('nova-cat-nome').value = "";
+        renderConfig();
+    }
+
+    function criarRegra(termo) {
+        const catDestino = prompt(`Toda vez que a descrição contiver "${termo}", qual categoria deve ser usada?\n\nEscolha: ${categorias.join(', ')}`);
+        if(catDestino && categorias.includes(catDestino)) {
+            regras.push({ termo: termo.toLowerCase(), categoria: catDestino });
+            localStorage.setItem('insight_regras', JSON.stringify(regras));
+            renderCategorizacao();
+        } else if(catDestino) {
+            alert("Categoria não encontrada. Crie-a primeiro na aba Config.");
+        }
+    }
+
+    function aplicarRegras(item) {
+        if(item.tipo === 'ganho') return 'Ganhos';
+        const regraEncontrada = regras.find(r => item.desc.toLowerCase().includes(r.termo));
+        return regraEncontrada ? regraEncontrada.categoria : 'Não Categorizado';
+    }
+
+    // --- RENDERS ---
+    function renderCategorizacao() {
+        dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
+        const lista = document.getElementById('lista-pendentes');
+        lista.innerHTML = "";
+        
+        // Pegar descrições únicas que ainda não tem regra
+        let pendentes = [];
+        dbOrigem.forEach(i => {
+            if(i.tipo === 'gasto' && aplicarRegras(i) === 'Não Categorizado') {
+                if(!pendentes.includes(i.desc)) pendentes.push(i.desc);
             }
         });
 
-        const saldo = ganhos - gastos;
-
-        // Atualizar Cards
-        document.getElementById('total-ganhos').innerText = ganhos.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'});
-        document.getElementById('total-gastos').innerText = gastos.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'});
-        document.getElementById('saldo-final').innerText = saldo.toLocaleString('pt-br',{style: 'currency', currency: 'BRL'});
-        document.getElementById('saldo-final').style.color = saldo >= 0 ? 'var(--ganho)' : 'var(--gasto)';
-
-        // Badge de Margem
-        const margem = ganhos > 0 ? (saldo / ganhos * 100).toFixed(1) : 0;
-        const bc = document.getElementById('badge-container');
-        if(ganhos > 0) {
-            bc.innerHTML = `<div class="badge-lucro" style="background: ${saldo >= 0 ? '#34C75922' : '#FF3B3022'}; color: ${saldo >= 0 ? 'var(--ganho)' : 'var(--gasto)'};">
-                Eficiência: ${margem}% do faturamento
-            </div>`;
-        } else {
-            bc.innerHTML = "";
-        }
-
-        // Preparar Gráfico
-        renderizarGrafico(cats, gastos);
-    }
-
-    function renderizarGrafico(dadosCats, totalGastos) {
-        const ctx = document.getElementById('pizzaChart').getContext('2d');
-        const labels = Object.keys(dadosCats);
-        const valores = Object.values(dadosCats);
-        const cores = labels.map(l => coresBase[l] || '#8E8E93');
-
-        if (meuGrafico) {
-            meuGrafico.destroy();
-        }
-
-        if (labels.length === 0) {
-            document.getElementById('legendas').innerHTML = "<p style='text-align:center; color:#8e8e93; font-size:12px;'>Nenhum gasto registrado neste mês.</p>";
+        if(pendentes.length === 0) {
+            lista.innerHTML = "<p style='text-align:center; color:green'>✓ Tudo categorizado!</p>";
             return;
         }
 
-        meuGrafico = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: valores,
-                    backgroundColor: cores,
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                cutout: '75%',
-                plugins: {
-                    legend: { display: false }
-                }
-            }
-        });
-
-        // Legendas Detalhadas
-        const listaLegenda = document.getElementById('legendas');
-        listaLegenda.innerHTML = "";
-        
-        // Ordenar categorias pelo maior gasto
-        const ordenadas = Object.entries(dadosCats).sort((a,b) => b[1] - a[1]);
-
-        ordenadas.forEach(([cat, val]) => {
-            const p = ((val / totalGastos) * 100).toFixed(0);
-            listaLegenda.innerHTML += `
-                <div class="legend-item">
-                    <div class="legend-info">
-                        <div class="dot" style="background: ${coresBase[cat] || '#8E8E93'}"></div>
-                        <span style="font-size:14px;">${cat}</span>
-                    </div>
-                    <div class="val">
-                        R$ ${val.toFixed(2)} <span class="perc">${p}%</span>
-                    </div>
-                </div>
-            `;
+        pendentes.forEach(desc => {
+            lista.innerHTML += `<div class="item-pendente">
+                <span>${desc}</span>
+                <button class="btn-cat" onclick="criarRegra('${desc}')">Categorizar</button>
+            </div>`;
         });
     }
 
-    window.onload = () => {
-        const hoje = new Date();
-        const mesAtual = hoje.toISOString().substring(0, 7);
-        document.getElementById('mes-filtro').value = mesAtual;
-        atualizarDashboard();
-    };
-</script>
+    function renderDash() {
+        dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
+        let totais = { 'Ganhos': 0, 'Não Categorizado': 0 };
+        categorias.forEach(c => totais[c] = 0);
 
+        dbOrigem.forEach(i => {
+            const catFinal = aplicarRegras(i);
+            totais[catFinal] += parseFloat(i.valor);
+        });
+
+        document.getElementById('d-ganhos').innerText = `R$ ${totais['Ganhos'].toFixed(2)}`;
+        document.getElementById('d-gastos').innerText = `R$ ${(Object.values(totais).reduce((a,b)=>a+b) - totais['Ganhos']).toFixed(2)}`;
+
+        // Gráfico
+        const ctx = document.getElementById('insightChart').getContext('2d');
+        const labels = Object.keys(totais).filter(k => k !== 'Ganhos' && totais[k] > 0);
+        const valores = labels.map(l => totais[l]);
+
+        if(meuChart) meuChart.destroy();
+        meuChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{ data: valores, backgroundColor: ['#FF3B30', '#FF9500', '#FFCC00', '#34C759', '#007AFF', '#5856D6', '#AF52DE'] }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    function renderConfig() {
+        const d = document.getElementById('minhas-cats');
+        d.innerHTML = categorias.map(c => `<span class="badge" style="margin-right:5px; background:#007AFF22; color:#007AFF">${c}</span>`).join('');
+        
+        const r = document.getElementById('lista-regras');
+        r.innerHTML = regras.map((reg, idx) => `<div>"${reg.termo}" ➔ <b>${reg.categoria}</b> <span onclick="removerRegra(${idx})" style="color:red; margin-left:10px">✖</span></div>`).join('');
+    }
+
+    function removerRegra(idx) {
+        regras.splice(idx, 1);
+        localStorage.setItem('insight_regras', JSON.stringify(regras));
+        renderConfig();
+    }
+
+    window.onload = () => { renderDash(); };
+</script>
 </body>
 </html>
