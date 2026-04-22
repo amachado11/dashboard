@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight v2.2</title>
+    <title>Finanças Insight v2.3</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; }
@@ -16,26 +16,27 @@
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-sec); }
         .nav-btn.ativo { color: var(--primary); font-weight: bold; }
         .item-pendente { padding: 15px 0; border-bottom: 1px solid #eee; }
-        .item-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
-        .select-cat { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--primary); background: #f0f7ff; color: var(--primary); font-weight: 500; appearance: none; }
-        .badge { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: #eee; color: #666; display: inline-block; margin: 2px; }
+        .item-header { display: flex; flex-direction: column; margin-bottom: 8px; }
+        .item-desc { font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+        .select-cat { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid var(--primary); background: #f0f7ff; color: var(--primary); font-weight: 600; appearance: none; }
+        .badge { font-size: 10px; padding: 4px 8px; border-radius: 6px; background: #eee; color: #666; display: inline-block; margin: 2px; font-weight: bold; }
         .chart-box { height: 250px; margin: 10px auto; width: 250px; }
         input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px 0; font-size: 16px; outline: none; }
         .btn-save { background: var(--ganho); color: white; border: none; font-weight: bold; margin-top: 10px; }
-        .tipo-tag { font-size: 10px; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; margin-right: 5px; }
+        .tipo-tag { font-size: 9px; padding: 2px 5px; border-radius: 4px; text-transform: uppercase; width: fit-content; margin-bottom: 4px; font-weight: 800; }
     </style>
 </head>
 <body>
 
-<div class="header"><strong>Finanças Insight v2.2</strong></div>
+<div class="header"><strong>Finanças Insight v2.3</strong></div>
 
 <div id="aba-dash" class="aba ativa">
     <div style="display:flex; gap:10px; margin-bottom:15px">
-        <div class="card" style="flex:1"><span>Total Ganhos</span><br><b style="color:var(--ganho)" id="d-ganhos">R$ 0</b></div>
-        <div class="card" style="flex:1"><span>Total Gastos</span><br><b style="color:var(--gasto)" id="d-gastos">R$ 0</b></div>
+        <div class="card" style="flex:1"><span>Entradas</span><br><b style="color:var(--ganho)" id="d-ganhos">R$ 0</b></div>
+        <div class="card" style="flex:1"><span>Saídas</span><br><b style="color:var(--gasto)" id="d-gastos">R$ 0</b></div>
     </div>
     <div class="card">
-        <div style="text-align:center; font-weight:bold; margin-bottom:10px;">Distribuição de Gastos</div>
+        <div style="text-align:center; font-weight:bold; margin-bottom:15px; color: var(--text-sec)">Gasto por Categoria</div>
         <div class="chart-box"><canvas id="insightChart"></canvas></div>
         <div id="lista-detalhada" style="margin-top:20px"></div>
     </div>
@@ -43,33 +44,34 @@
 
 <div id="aba-cat" class="aba">
     <div class="card">
-        <strong>Categorização Inteligente</strong>
-        <p style="font-size:12px; color:var(--text-sec); margin-bottom:15px">Classifique entradas e saídas do App 1:</p>
+        <strong>Categorizar Lançamentos</strong>
+        <p style="font-size:12px; color:var(--text-sec); margin-bottom:15px">Defina onde cada item do seu histórico se encaixa:</p>
         <div id="lista-pendentes"></div>
     </div>
 </div>
 
 <div id="aba-config" class="aba">
     <div class="card">
-        <strong>Gerenciar Categorias</strong>
+        <strong>Minhas Categorias</strong>
         <div style="margin-bottom:10px">
-            <small>Categorias de Gastos:</small>
+            <small style="color:var(--gasto)">SAÍDAS (GASTOS):</small>
             <div id="cats-gastos"></div>
         </div>
         <div style="margin-bottom:15px">
-            <small>Categorias de Ganhos:</small>
+            <small style="color:var(--ganho)">ENTRADAS (GANHOS):</small>
             <div id="cats-ganhos"></div>
         </div>
-        <input type="text" id="nova-cat-nome" placeholder="Nome da Categoria">
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0">
+        <input type="text" id="nova-cat-nome" placeholder="Ex: Manutenção, Uber, Aluguel...">
         <select id="nova-cat-tipo">
-            <option value="gasto">Tipo: Gasto (Saída)</option>
-            <option value="ganho">Tipo: Ganho (Entrada)</option>
+            <option value="gasto">É um Gasto (Saída)</option>
+            <option value="ganho">É um Ganho (Entrada)</option>
         </select>
-        <button class="btn-save" onclick="adicionarCategoria()">Criar Nova Categoria</button>
+        <button class="btn-save" onclick="adicionarCategoria()">Salvar Categoria</button>
     </div>
     <div class="card">
-        <strong>Regras Ativas</strong>
-        <div id="lista-regras" style="font-size:13px; margin-top:10px"></div>
+        <strong>Regras de Inteligência</strong>
+        <div id="lista-regras" style="font-size:12px; margin-top:10px"></div>
     </div>
 </div>
 
@@ -82,10 +84,13 @@
 <script>
     let dbOrigem = [];
     let regras = JSON.parse(localStorage.getItem('insight_regras')) || []; 
+    
+    // Recuperação de categorias com fallback para não sumir nada
     let categorias = JSON.parse(localStorage.getItem('insight_categorias_v2')) || {
-        gastos: ['Gasolina', 'Manutenção Carro', 'Aluguel', 'Luz', 'Água', 'Comida', 'Besteira', 'Empréstimos', 'Cartão crédito', 'Saúde'],
+        gastos: ['Gasolina', 'Comida', 'Aluguel', 'Luz', 'Água', 'Saúde'],
         ganhos: ['Uber', '99', 'Particular']
     };
+
     let meuChart = null;
 
     function ir(aba, btn) {
@@ -112,14 +117,16 @@
     function salvarRegra(termo, selectElement, tipoOriginal) {
         const catDestino = selectElement.value;
         if(!catDestino) return;
-        regras = regras.filter(r => r.termo !== termo.toLowerCase());
+        // Remove regra antiga se existir para evitar duplicidade
+        regras = regras.filter(r => r.termo.toLowerCase() !== termo.toLowerCase());
         regras.push({ termo: termo.toLowerCase(), categoria: catDestino, tipo: tipoOriginal });
         localStorage.setItem('insight_regras', JSON.stringify(regras));
+        // Recarrega a lista para o item sumir imediatamente
         renderCategorizacao();
     }
 
     function aplicarRegras(item) {
-        const regraEncontrada = regras.find(r => item.desc.toLowerCase().includes(r.termo));
+        const regraEncontrada = regras.find(r => item.desc.toLowerCase().trim() === r.termo.toLowerCase().trim());
         return regraEncontrada ? regraEncontrada.categoria : 'Não Categorizado';
     }
 
@@ -131,26 +138,29 @@
         let pendentes = [];
         dbOrigem.forEach(i => {
             if(aplicarRegras(i) === 'Não Categorizado') {
-                if(!pendentes.some(p => p.desc === i.desc)) pendentes.push(i);
+                if(!pendentes.some(p => p.desc.toLowerCase() === i.desc.toLowerCase())) {
+                    pendentes.push(i);
+                }
             }
         });
 
         if(pendentes.length === 0) {
-            lista.innerHTML = "<div style='text-align:center; padding:20px; color:var(--ganho)'><b>✨ Tudo organizado!</b></div>";
+            lista.innerHTML = "<div style='text-align:center; padding:30px; color:var(--ganho)'><b>✨ Tudo Categorizado!</b><br><small>Seus dados estão prontos no resumo.</small></div>";
             return;
         }
 
         pendentes.forEach(item => {
-            let options = (item.tipo === 'ganho' ? categorias.ganhos : categorias.gastos)
-                .map(c => `<option value="${c}">${c}</option>`).join('');
+            let listaOpcoes = (item.tipo === 'ganho' ? categorias.ganhos : categorias.gastos);
+            let options = listaOpcoes.map(c => `<option value="${c}">${c}</option>`).join('');
             
             lista.innerHTML += `
                 <div class="item-pendente">
                     <div class="item-header">
-                        <span><span class="tipo-tag" style="background:${item.tipo==='ganho'?'#34C75922':'#FF3B3022'}; color:${item.tipo==='ganho'?'var(--ganho)':'var(--gasto)'}">${item.tipo==='ganho'?'Entrada':'Saída'}</span>${item.desc}</span>
+                        <span class="tipo-tag" style="background:${item.tipo==='ganho'?'#34C75922':'#FF3B3022'}; color:${item.tipo==='ganho'?'var(--ganho)':'var(--gasto)'}">${item.tipo==='ganho'?'Receita':'Despesa'}</span>
+                        <span class="item-desc">${item.desc}</span>
                     </div>
                     <select class="select-cat" onchange="salvarRegra('${item.desc}', this, '${item.tipo}')">
-                        <option value="">Selecionar categoria...</option>
+                        <option value="">O que é isso? Clique aqui...</option>
                         ${options}
                     </select>
                 </div>`;
@@ -161,16 +171,20 @@
         dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
         let totaisGastos = {};
         let totalGanhosValor = 0;
+        let totalGastosValor = 0;
 
         dbOrigem.forEach(i => {
             const v = parseFloat(i.valor);
             const cat = aplicarRegras(i);
-            if(i.tipo === 'ganho') totalGanhosValor += v;
-            else { totaisGastos[cat] = (totaisGastos[cat] || 0) + v; }
+            if(i.tipo === 'ganho') {
+                totalGanhosValor += v;
+            } else { 
+                totalGastosValor += v;
+                totaisGastos[cat] = (totaisGastos[cat] || 0) + v; 
+            }
         });
 
         document.getElementById('d-ganhos').innerText = `R$ ${totalGanhosValor.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
-        const totalGastosValor = Object.values(totaisGastos).reduce((a, b) => a + b, 0);
         document.getElementById('d-gastos').innerText = `R$ ${totalGastosValor.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
 
         const ctx = document.getElementById('insightChart').getContext('2d');
@@ -184,30 +198,30 @@
                 labels: labels,
                 datasets: [{ 
                     data: valores, 
-                    backgroundColor: ['#FF3B30', '#5AC8FA', '#FFCC00', '#AF52DE', '#FF9500', '#5856D6', '#007AFF', '#34C759', '#8E8E93', '#E5E5EA'],
+                    backgroundColor: ['#FF3B30', '#5AC8FA', '#FFCC00', '#AF52DE', '#FF9500', '#5856D6', '#007AFF', '#34C759', '#8E8E93'],
                     borderWidth: 2
                 }]
             },
-            options: { cutout: '70%', plugins: { legend: { display: false } } }
+            options: { cutout: '72%', plugins: { legend: { display: false } } }
         });
 
         const ld = document.getElementById('lista-detalhada');
         ld.innerHTML = labels.map(l => `
-            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee; font-size:14px">
+            <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f2f2f7; font-size:14px">
                 <span>${l}</span>
-                <b>R$ ${totaisGastos[l].toLocaleString('pt-br', {minimumFractionDigits: 2})}</b>
+                <b style="color:var(--text)">R$ ${totaisGastos[l].toLocaleString('pt-br', {minimumFractionDigits: 2})}</b>
             </div>
         `).join('');
     }
 
     function renderConfig() {
-        document.getElementById('cats-gastos').innerHTML = categorias.gastos.map(c => `<span class="badge" style="border-left: 3px solid var(--gasto)">${c}</span>`).join('');
-        document.getElementById('cats-ganhos').innerHTML = categorias.ganhos.map(c => `<span class="badge" style="border-left: 3px solid var(--ganho)">${c}</span>`).join('');
+        document.getElementById('cats-gastos').innerHTML = categorias.gastos.map(c => `<span class="badge" style="border-bottom: 2px solid var(--gasto)">${c}</span>`).join('');
+        document.getElementById('cats-ganhos').innerHTML = categorias.ganhos.map(c => `<span class="badge" style="border-bottom: 2px solid var(--ganho)">${c}</span>`).join('');
         const r = document.getElementById('lista-regras');
         r.innerHTML = regras.map((reg, idx) => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; background:#f9f9f9; padding:10px; border-radius:8px">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; background:#f9f9f9; padding:12px; border-radius:10px; border-left: 4px solid var(--primary)">
                 <span style="font-size:12px">"${reg.termo}" ➔ <b style="color:var(--primary)">${reg.categoria}</b></span>
-                <span onclick="removerRegra(${idx})" style="color:red; font-weight:bold; padding:0 5px">✕</span>
+                <span onclick="removerRegra(${idx})" style="color:red; font-weight:bold; padding:0 10px">✕</span>
             </div>`).join('');
     }
 
