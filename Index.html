@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Finanças Insight v2.9</title>
+    <title>Finanças Insight v3.0</title>
     <style>
         :root { --bg: #F2F2F7; --card: #FFFFFF; --primary: #007AFF; --text: #1C1C1E; --text-sec: #8E8E93; --ganho: #34C759; --gasto: #FF3B30; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 90px; }
         .header { background: white; padding: 15px; border-bottom: 1px solid #d1d1d6; position: sticky; top: 0; z-index: 10; text-align: center; }
         .aba { display: none; padding: 15px; }
         .aba.ativa { display: block; }
@@ -15,22 +15,21 @@
         .nav-btn { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; color: var(--text-sec); }
         .nav-btn.ativo { color: var(--primary); font-weight: bold; }
         
-        .seletor-datas { display: flex; gap: 10px; margin-bottom: 15px; }
+        .seletor-datas { display: flex; gap: 10px; margin-bottom: 15px; background: #e9e9eb; padding: 10px; border-radius: 12px; }
         .seletor-datas div { flex: 1; }
-        .seletor-datas label { font-size: 10px; font-weight: bold; color: var(--text-sec); display: block; margin-bottom: 4px; }
-        .seletor-datas input { padding: 8px; font-size: 13px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        .seletor-datas label { font-size: 9px; font-weight: 800; color: var(--text-sec); text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .seletor-datas input { width: 100%; border: none; background: transparent; font-size: 14px; font-weight: 600; color: var(--primary); outline: none; }
 
-        .item-lista { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; cursor: pointer; }
-        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+        .item-lista { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; }
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; }
         .modal-content { background:white; width:90%; max-height:80%; border-radius:20px; padding:20px; overflow-y:auto; position:relative; }
         .progresso-container { height: 8px; background: #E5E5EA; border-radius: 4px; margin: 10px 0; overflow: hidden; }
         .progresso-bar { height: 100%; transition: width 0.5s; }
-        input, select, button { border-radius: 8px; border: 1px solid #ddd; outline: none; }
     </style>
 </head>
 <body>
 
-<div class="header"><strong>Finanças Insight v2.9</strong></div>
+<div class="header"><strong>Finanças Insight v3.0</strong></div>
 
 <div id="modal" onclick="fecharModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
@@ -43,23 +42,29 @@
 <div id="aba-dash" class="aba ativa">
     <div class="seletor-datas">
         <div>
-            <label>DE:</label>
+            <label>Início</label>
             <input type="date" id="data-inicio" onchange="renderDash()">
         </div>
         <div>
-            <label>ATÉ:</label>
+            <label>Fim</label>
             <input type="date" id="data-fim" onchange="renderDash()">
         </div>
     </div>
 
-    <div class="card" style="text-align: center; border-bottom: 4px solid var(--primary);">
-        <span style="font-size: 12px; color: var(--text-sec);">Saldo Líquido</span><br>
-        <b style="font-size: 24px;" id="d-saldo">R$ 0,00</b>
+    <div class="card" style="text-align: center;">
+        <span style="font-size: 12px; color: var(--text-sec);">Saldo Líquido no Período</span><br>
+        <b style="font-size: 28px;" id="d-saldo">R$ 0,00</b>
     </div>
 
     <div style="display:flex; gap:10px; margin-bottom:15px">
-        <div class="card" style="flex:1"><span>Entradas</span><br><b style="color:var(--ganho)" id="d-ganhos">R$ 0</b></div>
-        <div class="card" style="flex:1"><span>Saídas</span><br><b style="color:var(--gasto)" id="d-gastos">R$ 0</b></div>
+        <div class="card" style="flex:1; border-left: 4px solid var(--ganho)">
+            <small style="color:var(--text-sec)">Entradas</small><br>
+            <b style="color:var(--ganho)" id="d-ganhos">R$ 0</b>
+        </div>
+        <div class="card" style="flex:1; border-left: 4px solid var(--gasto)">
+            <small style="color:var(--text-sec)">Saídas</small><br>
+            <b style="color:var(--gasto)" id="d-gastos">R$ 0</b>
+        </div>
     </div>
 
     <div class="card">
@@ -82,16 +87,20 @@
 </div>
 
 <div id="aba-cat" class="aba">
-    <div class="card"><strong>Itens Pendentes</strong><div id="lista-pendentes"></div></div>
+    <div class="card"><strong>Categorizar Lançamentos</strong><div id="lista-pendentes"></div></div>
 </div>
 
 <div id="aba-config" class="aba">
     <div class="card">
-        <strong>Categorias</strong>
-        <div id="cats-all" style="margin-bottom:10px"></div>
-        <input type="text" id="nova-cat-nome" placeholder="Nome" style="width:100%; padding:10px; margin-bottom:5px">
-        <select id="nova-cat-tipo" style="width:100%; padding:10px; margin-bottom:10px"><option value="gasto">Saída</option><option value="ganho">Entrada</option></select>
-        <button style="background:var(--ganho); color:white; border:none; font-weight:bold; width:100%; padding:12px; border-radius:8px" onclick="adicionarCategoria()">Criar Nova</button>
+        <strong>Configurações</strong>
+        <p>Categorias Ativas:</p>
+        <div id="cats-all" style="margin-bottom:15px"></div>
+        <input type="text" id="nova-cat-nome" placeholder="Nova Categoria" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px">
+        <select id="nova-cat-tipo" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px">
+            <option value="gasto">Tipo: Saída</option>
+            <option value="ganho">Tipo: Entrada</option>
+        </select>
+        <button style="background:var(--primary); color:white; border:none; font-weight:bold; width:100%; padding:15px; border-radius:10px" onclick="adicionarCategoria()">Salvar Categoria</button>
     </div>
 </div>
 
@@ -109,15 +118,19 @@
         ganhos: ['Uber', '99', 'Particular', 'Reembolso', 'Empréstimo', 'Cashback', 'Shopee']
     };
 
-    function configurarDatasPadrao() {
+    // Configura o filtro para: Dia 1 do mês atual até Hoje
+    function initDatas() {
         const agora = new Date();
-        const primeiroDia = new Date(agora.getFullYear(), agora.getMonth(), 1);
+        const ano = agora.getFullYear();
+        const mes = String(agora.getMonth() + 1).padStart(2, '0');
+        const hoje = String(agora.getDate()).padStart(2, '0');
         
-        document.getElementById('data-inicio').value = primeiroDia.toISOString().split('T')[0];
-        document.getElementById('data-fim').value = agora.toISOString().split('T')[0];
+        document.getElementById('data-inicio').value = `${ano}-${mes}-01`;
+        document.getElementById('data-fim').value = `${ano}-${mes}-${hoje}`;
     }
 
-    function parseDataBrParaDate(str) {
+    // Converte DD/MM/AAAA para objeto Date do JS comparável
+    function brToDate(str) {
         const [d, m, y] = str.split('/');
         return new Date(y, m - 1, d);
     }
@@ -125,17 +138,20 @@
     function renderDash() {
         dbOrigem = JSON.parse(localStorage.getItem('financas_v_final')) || [];
         
-        const dataInicioStr = document.getElementById('data-inicio').value;
-        const dataFimStr = document.getElementById('data-fim').value;
+        // Pega datas dos inputs (formato AAAA-MM-DD)
+        const dIniStr = document.getElementById('data-inicio').value;
+        const dFimStr = document.getElementById('data-fim').value;
         
-        const dInicio = dataInicioStr ? new Date(dataInicioStr + "T00:00:00") : new Date(0);
-        const dFim = dataFimStr ? new Date(dataFimStr + "T23:59:59") : new Date();
+        // Cria objetos de comparação (com ajuste de fuso horário local)
+        const dIni = dIniStr ? new Date(dIniStr.replace(/-/g, '\/')) : new Date(0);
+        const dFim = dFimStr ? new Date(dFimStr.replace(/-/g, '\/')) : new Date();
+        dFim.setHours(23, 59, 59);
 
         let tGastos = {}, tGanhos = {}, vGanhos = 0, vGastos = 0;
         
         dbOrigem.forEach(i => {
-            const dataItem = parseDataBrParaDate(i.data);
-            if (dataItem >= dInicio && dataItem <= dFim) {
+            const dataItem = brToDate(i.data);
+            if (dataItem >= dIni && dataItem <= dFim) {
                 const v = parseFloat(i.valor), cat = aplicarRegras(i);
                 if(i.tipo === 'ganho') { vGanhos += v; tGanhos[cat] = (tGanhos[cat] || 0) + v; }
                 else { vGastos += v; tGastos[cat] = (tGastos[cat] || 0) + v; }
@@ -159,8 +175,8 @@
             </div>
         `).join('');
 
-        document.getElementById('lista-ganhos').innerHTML = listHtml(tGanhos, 'ganho') || "<small>Sem entradas</small>";
-        document.getElementById('lista-gastos').innerHTML = listHtml(tGastos, 'gasto') || "<small>Sem saídas</small>";
+        document.getElementById('lista-ganhos').innerHTML = listHtml(tGanhos, 'ganho') || "<small>Nenhuma entrada neste período.</small>";
+        document.getElementById('lista-gastos').innerHTML = listHtml(tGastos, 'gasto') || "<small>Nenhuma saída neste período.</small>";
     }
 
     function verDetalhes(catNome, tipo) {
@@ -169,12 +185,13 @@
         document.getElementById('modal-titulo').innerText = catNome;
         modal.style.display = 'flex';
         
-        const dInicio = new Date(document.getElementById('data-inicio').value + "T00:00:00");
-        const dFim = new Date(document.getElementById('data-fim').value + "T23:59:59");
+        const dIni = new Date(document.getElementById('data-inicio').value.replace(/-/g, '\/'));
+        const dFim = new Date(document.getElementById('data-fim').value.replace(/-/g, '\/'));
+        dFim.setHours(23, 59, 59);
 
         const itens = dbOrigem.filter(i => {
-            const dataItem = parseDataBrParaDate(i.data);
-            return i.tipo === tipo && aplicarRegras(i) === catNome && dataItem >= dInicio && dataItem <= dFim;
+            const dataItem = brToDate(i.data);
+            return i.tipo === tipo && aplicarRegras(i) === catNome && dataItem >= dIni && dataItem <= dFim;
         });
 
         corpo.innerHTML = itens.map(i => `
@@ -210,10 +227,10 @@
             if(aplicarRegras(i) === 'Não Categorizado' && !pendentes.some(p => p.desc.toLowerCase() === i.desc.toLowerCase())) pendentes.push(i);
         });
         lista.innerHTML = pendentes.length === 0 ? "<p style='text-align:center;'>Tudo categorizado!</p>" : 
-            pendentes.map(i => `<div style="padding:10px 0; border-bottom:1px solid #eee">
-                <small>${i.tipo==='ganho'?'ENTRADA':'SAÍDA'}</small><br><strong>${i.desc}</strong>
-                <select style="width:100%; padding:10px" onchange="salvarRegra('${i.desc}', this.value, '${i.tipo}')">
-                    <option value="">Escolher...</option>
+            pendentes.map(i => `<div style="padding:15px; background:#fff; border-radius:10px; margin-bottom:10px; border:1px solid #eee">
+                <small style="color:var(--text-sec)">${i.tipo==='ganho'?'ENTRADA':'SAÍDA'}</small><br><strong>${i.desc}</strong>
+                <select style="width:100%; padding:10px; margin-top:10px; border-radius:8px" onchange="salvarRegra('${i.desc}', this.value, '${i.tipo}')">
+                    <option value="">Escolher Categoria...</option>
                     ${(i.tipo==='ganho'?categorias.ganhos:categorias.gastos).map(c => `<option value="${c}">${c}</option>`).join('')}
                 </select></div>`).join('');
     }
@@ -226,17 +243,18 @@
     }
 
     function renderConfig() {
-        document.getElementById('cats-all').innerHTML = [...categorias.gastos, ...categorias.ganhos].map(c => `<span style="font-size:10px; padding:4px; background:#eee; margin:2px; border-radius:4px; display:inline-block">${c}</span>`).join('');
+        document.getElementById('cats-all').innerHTML = [...categorias.gastos, ...categorias.ganhos].map(c => `<span style="font-size:10px; padding:6px 10px; background:#e9e9eb; margin:3px; border-radius:20px; display:inline-block; color:#555">${c}</span>`).join('');
     }
 
     function adicionarCategoria() {
         const nome = document.getElementById('nova-cat-nome').value.trim(), tipo = document.getElementById('nova-cat-tipo').value;
         if(nome) { if(tipo==='gasto') categorias.gastos.push(nome); else categorias.ganhos.push(nome); }
         localStorage.setItem('insight_categorias_v2', JSON.stringify(categorias));
+        document.getElementById('nova-cat-nome').value = "";
         renderConfig();
     }
 
-    window.onload = () => { configurarDatasPadrao(); renderDash(); };
+    window.onload = () => { initDatas(); renderDash(); };
 </script>
 </body>
 </html>
